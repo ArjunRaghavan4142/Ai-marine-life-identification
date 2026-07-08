@@ -1,0 +1,20 @@
+{
+  "fish": "common",
+  "serranidae": "common",
+  "urchin": "common",
+  "scaridae": "common",
+  "chaetodontidae": "common",
+  "giant_clam": "uncommon",
+  "lutjanidae": "common",
+  "muraenidae": "uncommon",
+  "sea_cucumber": "common",
+  "haemulidae": "uncommon",
+  "lobster": "uncommon",
+  "crown_of_thorns": "uncommon",
+  "bolbometopon_muricatum": "rare",
+  "cheilinus_undulatus": "rare",
+  "cromileptes_altivelis": "rare",
+  "ray": "rare",
+  "shark": "rare",
+  "turtle": "rare"
+}

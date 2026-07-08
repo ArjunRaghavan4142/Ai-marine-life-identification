@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiveBuddy — Dive Analysis</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a1628;
+      color: #e8f4f8;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #0d2240;
+      border: 1px solid rgba(0,229,196,0.2);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 720px;
+    }
+    h1 { font-size: 28px; margin-bottom: 6px; }
+    h1 span { color: #00e5c4; }
+    .sub { color: #8ab4c8; font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 16px; margin: 28px 0 12px; color: #00e5c4; }
+
+    .upload-zone {
+      border: 2px dashed rgba(0,229,196,0.3);
+      border-radius: 14px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: all 0.2s;
+    }
+    .upload-zone:hover { border-color: #00e5c4; background: rgba(0,229,196,0.05); }
+    .upload-zone .icon { font-size: 40px; margin-bottom: 10px; }
+    .upload-zone p { color: #8ab4c8; font-size: 14px; }
+    .upload-zone strong { color: #e8f4f8; }
+
+    input[type="file"] { display: none; }
+
+    .filename {
+      background: rgba(0,229,196,0.08);
+      border: 1px solid rgba(0,229,196,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #00e5c4;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #00e5c4;
+      color: #0a1628;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status-box {
+      margin-top: 20px;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-box.success { background: rgba(0,229,196,0.08); border: 1px solid rgba(0,229,196,0.3); }
+    .status-box.error { background: rgba(255,107,74,0.08); border: 1px solid rgba(255,107,74,0.3); color: #ff6b4a; }
+    .status-box.pending { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    th { color: #8ab4c8; font-weight: 600; text-transform: uppercase; font-size: 11px; }
+    .rarity-common { color: #8ab4c8; }
+    .rarity-uncommon { color: #ffcf5c; }
+    .rarity-rare { color: #ff8a65; font-weight: 700; }
+    .rarity-unknown { color: #8ab4c8; }
+
+    .empty-row { color: #8ab4c8; font-style: italic; }
+
+    .downloads { display: flex; gap: 12px; margin-top: 20px; }
+    .downloads a {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,229,196,0.3);
+      color: #00e5c4;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .downloads a:hover { background: rgba(0,229,196,0.08); }
+
+    .thumb {
+      width: 48px;
+      height: 36px;
+      object-fit: cover;
+      border-radius: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Dive<span>Buddy</span></h1>
+    <p class="sub">Upload a dive video for automatic species detection &amp; biodiversity reporting</p>
+
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">🎬</div>
+      <strong>Click to select your dive video</strong>
+      <p>.mp4 files only</p>
+    </div>
+
+    <input type="file" id="fileInput" accept=".mp4" onchange="fileSelected(this)">
+    <div class="filename" id="filename"></div>
+
+    <button id="uploadBtn" onclick="uploadVideo()" disabled>Upload &amp; Analyze</button>
+
+    <div class="status-box" id="statusBox"></div>
+
+    <div id="resultsSection" style="display:none;">
+      <h2>Species observed</h2>
+      <table id="speciesTable">
+        <thead>
+          <tr><th>Species</th><th>Unique count</th><th>Avg. confidence</th><th>Rarity</th></tr>
+        </thead>
+        <tbody id="speciesBody"></tbody>
+      </table>
+
+      <h2>Flagged for manual review</h2>
+      <table id="reviewTable">
+        <thead>
+          <tr><th>Snapshot</th><th>Timestamp (s)</th><th>Best guess</th><th>Confidence</th></tr>
+        </thead>
+        <tbody id="reviewBody"></tbody>
+      </table>
+
+      <div class="downloads">
+        <a id="csvLink" href="#" target="_blank">⬇ Download CSV</a>
+        <a id="pdfLink" href="#" target="_blank">⬇ Download PDF</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8000';
+    let selectedFile = null;
+    let pollTimer = null;
+
+    function fileSelected(input) {
+      selectedFile = input.files[0];
+      if (selectedFile) {
+        const fnEl = document.getElementById('filename');
+        fnEl.textContent = '📎 ' + selectedFile.name + ' (' + (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB)';
+        fnEl.style.display = 'block';
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+
+    function showStatus(kind, html) {
+      const box = document.getElementById('statusBox');
+      box.className = 'status-box ' + kind;
+      box.innerHTML = html;
+      box.style.display = 'block';
+    }
+
+    async function uploadVideo() {
+      if (!selectedFile) return;
+      if (pollTimer) clearInterval(pollTimer);
+
+      document.getElementById('uploadBtn').disabled = true;
+      document.getElementById('resultsSection').style.display = 'none';
+      showStatus('pending', '⏳ Uploading...');
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const response = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (!response.ok) {
+          showStatus('error', '✗ Error: ' + data.detail);
+          document.getElementById('uploadBtn').disabled = false;
+          return;
+        }
+
+        showStatus('pending', '⏳ Processing dive footage (extracting frames, detecting species)... this can take a while for longer videos.');
+        pollJob(data.job_id);
+      } catch (err) {
+        showStatus('error', '✗ Could not connect to server. Make sure the backend is running on port 8000.');
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+
+    function pollJob(jobId) {
+      pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/jobs/${jobId}`);
+          const job = await res.json();
+
+          if (job.status === 'done') {
+            clearInterval(pollTimer);
+            showStatus('success', '✓ Analysis complete');
+            await loadResults(jobId);
+            document.getElementById('uploadBtn').disabled = false;
+          } else if (job.status === 'error') {
+            clearInterval(pollTimer);
+            showStatus('error', '✗ Processing failed: ' + job.error);
+            document.getElementById('uploadBtn').disabled = false;
+          }
+        } catch (err) {
+          clearInterval(pollTimer);
+          showStatus('error', '✗ Lost connection while checking job status.');
+          document.getElementById('uploadBtn').disabled = false;
+        }
+      }, 2000);
+    }
+
+    async function loadResults(jobId) {
+      const res = await fetch(`${API_BASE}/jobs/${jobId}/results`);
+      const result = await res.json();
+
+      const speciesBody = document.getElementById('speciesBody');
+      speciesBody.innerHTML = '';
+      if (result.species_summary.length === 0) {
+        speciesBody.innerHTML = '<tr><td colspan="4" class="empty-row">No species identified above the confidence threshold</td></tr>';
+      } else {
+        for (const row of result.species_summary) {
+          speciesBody.innerHTML += `
+            <tr>
+              <td>${row.species}</td>
+              <td>${row.unique_count}</td>
+              <td>${row.avg_confidence.toFixed(2)}</td>
+              <td class="rarity-${row.rarity}">${row.rarity}</td>
+            </tr>`;
+        }
+      }
+
+      const reviewBody = document.getElementById('reviewBody');
+      reviewBody.innerHTML = '';
+      if (result.review_queue.length === 0) {
+        reviewBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nothing flagged — every detection was confident enough to auto-count</td></tr>';
+      } else {
+        for (const row of result.review_queue) {
+          const thumb = row.crop_path ? `<img class="thumb" src="${API_BASE}/outputs/${row.crop_path}" onerror="this.style.display='none'">` : '—';
+          reviewBody.innerHTML += `
+            <tr>
+              <td>${thumb}</td>
+              <td>${row.timestamp_sec}</td>
+              <td>${row.species_guess}</td>
+              <td>${row.max_confidence.toFixed(2)}</td>
+            </tr>`;
+        }
+      }
+
+      document.getElementById('csvLink').href = `${API_BASE}/jobs/${jobId}/report.csv`;
+      document.getElementById('pdfLink').href = `${API_BASE}/jobs/${jobId}/report.pdf`;
+      document.getElementById('resultsSection').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

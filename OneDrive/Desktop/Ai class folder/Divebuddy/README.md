@@ -38,9 +38,70 @@ smarter adaptive sampling strategy — both are follow-up work, not done here.
 
 ## Layout
 
+The backend (`backend/`) is a standalone, UI-agnostic script — it doesn't know
+or care what frontend talks to it. `frontend/index.html` is just the current
+UI wired to it. Swapping in a new UI design means pointing its JS at the API
+contract below; it does not touch anything in `backend/`. This is exactly how
+`frontend/index.html` itself got built — a separately-designed HTML mockup
+had its fetch calls pointed at these same endpoints.
+
 - `backend/app/main.py` — FastAPI app: upload endpoint, job status/results, report downloads
 - `backend/app/pipeline/` — frame extraction, detection+tracking, aggregation, report generation
 - `backend/app/rarity_map.json` — placeholder common/uncommon/rare tag per species (not from real survey data yet)
-- `frontend/index.html` — upload UI + results table + review queue + report downloads
+- `frontend/index.html` — current UI, wired to the API contract below
 - `scripts/download_models.py` — fetches the marine-detect model weights
 - `datasets/README.md` — FishNet/LILA notes for future fine-tuning
+
+## API contract
+
+Base URL: `http://localhost:8000`. CORS is wide open (`allow_origins=["*"]`),
+so any UI — a local HTML file, a dev server on a different port, whatever —
+can call these directly with no proxy/config needed.
+
+**`POST /upload`** — multipart form, field name `file`, must end in `.mp4`
+(case-insensitive). Saves the video and kicks off processing in the
+background; returns immediately.
+```json
+{"job_id": "1cec1ad8648e", "status": "processing", "filename": "dive.mp4"}
+```
+
+**`GET /jobs/{job_id}`** — poll this until `status` is `"done"` or `"error"`.
+```json
+{"job_id": "1cec1ad8648e", "status": "done", "error": null}
+```
+
+**`GET /jobs/{job_id}/results`** — 409 until the job is done.
+```json
+{
+  "species_summary": [
+    {"species": "fish", "unique_count": 3, "avg_confidence": 0.75, "rarity": "common"}
+  ],
+  "review_queue": [
+    {"track_id": "FishInv_19", "species_guess": "fish", "max_confidence": 0.38,
+     "timestamp_sec": 12.0, "crop_path": "1cec.../crops/FishInv_19_60.jpg"}
+  ]
+}
+```
+`crop_path` is servable directly at `GET /outputs/{crop_path}` (static mount).
+
+**`GET /jobs/{job_id}/report.csv`** / **`GET /jobs/{job_id}/report.pdf`** —
+file downloads, 409 until done.
+
+**`GET /jobs`** — full job history, most recent first. Powers Home /
+Previous Dives.
+```json
+{"jobs": [{"job_id": "...", "filename": "...", "status": "done",
+  "uploaded_at": "2026-07-08T16:35:44+00:00", "species_count": 2,
+  "total_sightings": 4, "flagged_count": 1}]}
+```
+
+**`GET /species`** — the 18-class catalog, tallied against every completed
+job. Powers Fish Dex.
+```json
+{"species": [{"species": "fish", "seen": true, "total_sightings": 3}]}
+```
+
+Job history is in-memory only — it resets if the backend restarts. There's
+no auth, no rate limiting, and no per-user scoping (every job is global);
+none of that was needed for a single-user MVP, but a next UI that assumes
+multiple accounts would need those built first.

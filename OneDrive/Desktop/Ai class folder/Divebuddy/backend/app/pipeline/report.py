@@ -9,8 +9,11 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 
 def generate_csv(result: dict, out_path: pathlib.Path) -> None:
-    species_df = pd.DataFrame(result["species_summary"])
-    review_df = pd.DataFrame(result["review_queue"])
+    # Explicit columns so the header row still appears when a list is empty --
+    # pd.DataFrame([]) otherwise has no columns to infer, producing a blank
+    # section with no header instead of a clearly-empty table.
+    species_df = pd.DataFrame(result["species_summary"], columns=["species", "unique_count", "avg_confidence", "rarity"])
+    review_df = pd.DataFrame(result["review_queue"], columns=["track_id", "species_guess", "max_confidence", "timestamp_sec", "crop_path"])
 
     with open(out_path, "w", newline="") as f:
         f.write("Species summary\n")

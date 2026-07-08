@@ -30,10 +30,18 @@ aggregation logic.
 import pathlib
 
 import cv2
+import torch
 from ultralytics import YOLO
 
 MODELS_DIR = pathlib.Path(__file__).resolve().parent.parent / "models"
 TRACKER_CONFIG = pathlib.Path(__file__).resolve().parent / "tracktrack_divebuddy.yaml"
+
+# CPU inference of two YOLO models + TrackTrack's optical-flow motion
+# compensation is what made a 20s clip take ~5 minutes (documented in
+# README). GPU inference of the same models is roughly an order of
+# magnitude faster. Falls back to CPU automatically on machines without a
+# CUDA-capable GPU -- same detection results either way, just faster.
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # `accept_conf` is marine-detect's own recommended threshold: detections at or
 # above this are auto-counted. We run the tracker at a lower `review_conf` floor
@@ -70,6 +78,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
                 persist=True,
                 tracker=str(TRACKER_CONFIG),
                 verbose=False,
+                device=DEVICE,
             )[0]
 
             if result.boxes is None or result.boxes.id is None:

@@ -11,17 +11,25 @@ duplicate suppression via TrackTrack (bundled in `ultralytics`, tuned in
 for the FishNet/LILA fine-tuning path once real dive footage surfaces
 species these models miss.
 
-## Known limitation: processing time doesn't scale to full-length dives
+## Performance: GPU vs CPU
 
 Frames are sampled at 5 fps because anything sparser measurably misses real
 sightings (verified against real dive footage — see git history on
 `backend/app/main.py`), and TrackTrack needs continuous-enough motion between
-frames to keep an animal's identity stable across a moving camera. On CPU,
-that's roughly 5 minutes of processing per 20 seconds of footage with both
-detection models running. A real 20-60 minute dive video would take **hours**,
-not minutes. This is fine for short clips/highlights; it is not yet viable
-for full dive logs. Fixing this for real means either GPU inference or a
-smarter adaptive sampling strategy — both are follow-up work, not done here.
+frames to keep an animal's identity stable across a moving camera. That's a
+lot of YOLO inference calls per video, so hardware matters a lot here:
+
+- **CPU only**: ~5 minutes of processing per 20 seconds of footage. A real
+  20-60 minute dive would take **hours**. Fine for short clips, not viable
+  for full dive logs.
+- **NVIDIA GPU** (`device="cuda"` in `backend/app/pipeline/detect.py`, picked
+  automatically when available): the same 20s clip measured at **~1 minute**
+  — roughly 5x faster, verified with identical detection output on both. A
+  full dive is still minutes rather than seconds, but no longer hours.
+
+There's still no smarter adaptive sampling (e.g. skipping visually-static
+stretches) — that's the next lever if GPU still isn't fast enough for very
+long videos.
 
 ## Run it
 
@@ -29,6 +37,12 @@ smarter adaptive sampling strategy — both are follow-up work, not done here.
 # one-time setup
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 .venv\Scripts\python.exe scripts\download_models.py
+
+# if you have an NVIDIA GPU, swap in the CUDA build of torch (~5x faster --
+# see "Performance" above). Check your GPU/driver first with `nvidia-smi`;
+# cu128 works with any reasonably recent driver.
+.venv\Scripts\python.exe -m pip uninstall -y torch torchvision
+.venv\Scripts\python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
 # start the API
 .venv\Scripts\python.exe -m uvicorn app.main:app --reload --app-dir backend

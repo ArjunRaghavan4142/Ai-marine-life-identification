@@ -578,20 +578,20 @@
         <div class="hero-name">OceanExplorer_99</div>
         <div class="hero-stats">
           <div class="hero-stat">
-            <div class="hero-stat-val">47</div>
+            <div class="hero-stat-val" id="stat-dives">0</div>
             <div class="hero-stat-lbl">Dives</div>
           </div>
           <div class="hero-stat">
-            <div class="hero-stat-val">3,840</div>
-            <div class="hero-stat-lbl">Points</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-val">127</div>
+            <div class="hero-stat-val" id="stat-species">0</div>
             <div class="hero-stat-lbl">Species</div>
           </div>
           <div class="hero-stat">
-            <div class="hero-stat-val">#84</div>
-            <div class="hero-stat-lbl">Global</div>
+            <div class="hero-stat-val" id="stat-sightings">0</div>
+            <div class="hero-stat-lbl">Sightings</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val" id="stat-flagged">0</div>
+            <div class="hero-stat-lbl">Flagged</div>
           </div>
         </div>
       </div>
@@ -605,46 +605,8 @@
       </button>
 
       <div class="section-label">RECENT DIVES</div>
-
-      <div class="recent-dive-card" onclick="go('divestats')">
-        <div>
-          <div class="dive-name">Great Barrier Reef – Cod Hole</div>
-          <div class="dive-meta">12 Jun 2026 · 42 min · 18m depth</div>
-        </div>
-        <div>
-          <div class="dive-pts">+340</div>
-          <div class="dive-pts-label">pts</div>
-        </div>
-      </div>
-      <div class="recent-dive-card">
-        <div>
-          <div class="dive-name">Ningaloo Reef – Navy Pier</div>
-          <div class="dive-meta">3 Jun 2026 · 38 min · 14m depth</div>
-        </div>
-        <div>
-          <div class="dive-pts">+210</div>
-          <div class="dive-pts-label">pts</div>
-        </div>
-      </div>
-      <div class="recent-dive-card">
-        <div>
-          <div class="dive-name">Manta Ray Bay, Coral Sea</div>
-          <div class="dive-meta">28 May 2026 · 55 min · 22m depth</div>
-        </div>
-        <div>
-          <div class="dive-pts">+510</div>
-          <div class="dive-pts-label">pts</div>
-        </div>
-      </div>
-
-      <div class="section-label" style="margin-top:6px;">RARE SPECIES NEARBY</div>
-      <div class="card" style="display:flex;gap:12px;align-items:center;">
-        <span style="font-size:32px;">🦈</span>
-        <div>
-          <div style="font-size:14px;font-weight:600;">Whale Shark spotted</div>
-          <div style="font-size:12px;color:var(--text-secondary);">Cod Hole area · 2 sightings this week</div>
-          <div class="biolume-tag" style="margin-top:6px;">500 pts if spotted</div>
-        </div>
+      <div id="home-recent-dives">
+        <div class="card" style="color:var(--text-secondary);font-size:13px;">No dives processed yet.</div>
       </div>
     </div>
 
@@ -765,12 +727,11 @@
     <div class="page-header">
       <div class="back-link" onclick="go('home')" style="margin-bottom:10px;">← Home</div>
       <div class="page-title">Species Report</div>
-      <div class="page-subtitle">Cod Hole · 12 Jun 2026 · 42 min</div>
+      <div class="page-subtitle" id="report-subtitle">No dive loaded yet</div>
     </div>
     <div class="scroll-area">
       <div id="real-report-tags" style="display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap;">
-        <span class="biolume-tag">14 species found</span>
-        <span class="biolume-tag">+340 pts earned</span>
+        <span class="biolume-tag">0 species found</span>
         <span class="coral-tag">2 unidentified</span>
       </div>
 
@@ -895,70 +856,14 @@
   <div class="screen" id="screen-fishdex">
     <div class="page-header">
       <div class="page-title">Fish Dex</div>
-      <div class="page-subtitle">127 of 2,400 species discovered</div>
+      <div class="page-subtitle" id="dex-subtitle">0 of 18 species seen</div>
     </div>
     <div class="scroll-area">
-      <div class="dex-search">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-secondary);flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <input placeholder="Search species, location..." />
-      </div>
-      <div style="display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;">
-        <button class="biolume-tag" style="cursor:pointer;white-space:nowrap;">All</button>
-        <button class="coral-tag" style="cursor:pointer;white-space:nowrap;">Not seen</button>
-        <button style="background:rgba(245,200,66,0.12);color:var(--gold);border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;">Rare</button>
-      </div>
-      <div class="dex-grid">
-        <div class="dex-card seen">
-          <div class="dex-dot seen"></div>
-          <span class="dex-emoji">🦈</span>
-          <div class="dex-name">Whitetip Reef Shark</div>
-          <div class="dex-sci">Triaenodon obesus</div>
-        </div>
-        <div class="dex-card rare">
-          <div class="dex-dot rare"></div>
-          <span class="dex-emoji">🦁</span>
-          <div class="dex-name">Lionfish</div>
-          <div class="dex-sci">Pterois volitans</div>
-        </div>
-        <div class="dex-card seen">
-          <div class="dex-dot seen"></div>
-          <span class="dex-emoji">🐢</span>
-          <div class="dex-name">Green Sea Turtle</div>
-          <div class="dex-sci">Chelonia mydas</div>
-        </div>
-        <div class="dex-card unseen">
-          <div class="dex-dot unseen"></div>
-          <span class="dex-emoji">🐬</span>
-          <div class="dex-name">Bottlenose Dolphin</div>
-          <div class="dex-sci">Tursiops truncatus</div>
-        </div>
-        <div class="dex-card seen">
-          <div class="dex-dot seen"></div>
-          <span class="dex-emoji">🦑</span>
-          <div class="dex-name">Giant Cuttlefish</div>
-          <div class="dex-sci">Sepia apama</div>
-        </div>
-        <div class="dex-card seen">
-          <div class="dex-dot seen"></div>
-          <span class="dex-emoji">🐠</span>
-          <div class="dex-name">Clownfish</div>
-          <div class="dex-sci">Amphiprion ocellaris</div>
-        </div>
-        <div class="dex-card unseen">
-          <div class="dex-dot unseen"></div>
-          <span class="dex-emoji">🐙</span>
-          <div class="dex-name">Blue-ringed Octopus</div>
-          <div class="dex-sci">Hapalochlaena spp.</div>
-        </div>
-        <div class="dex-card rare">
-          <div class="dex-dot rare"></div>
-          <span class="dex-emoji">🐋</span>
-          <div class="dex-name">Whale Shark</div>
-          <div class="dex-sci">Rhincodon typus</div>
-        </div>
+      <div class="dex-grid" id="dex-grid">
+        <div class="card" style="grid-column:1/-1;color:var(--text-secondary);font-size:13px;">Loading...</div>
       </div>
       <div style="padding:12px 16px 0;font-size:11px;color:var(--text-secondary);text-align:center;">
-        🟢 Seen recently &nbsp;·&nbsp; 🔴 Not yet spotted &nbsp;·&nbsp; 🟡 Rare species
+        🟢 Seen in a processed dive &nbsp;·&nbsp; 🔴 Not yet spotted
       </div>
     </div>
 
@@ -1199,79 +1104,27 @@
   <div class="screen" id="screen-previousdives">
     <div class="page-header">
       <div class="page-title">My Dives</div>
-      <div class="page-subtitle">OceanExplorer_99 · 47 dives total</div>
+      <div class="page-subtitle" id="previousdives-subtitle">0 dives total</div>
     </div>
     <div class="scroll-area">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 16px;">
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--biolume);font-family:'Space Mono',monospace;">47</div>
+          <div style="font-size:18px;font-weight:700;color:var(--biolume);font-family:'Space Mono',monospace;" id="previousdives-stat-dives">0</div>
           <div style="font-size:10px;color:var(--text-secondary);">Dives</div>
         </div>
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;">3,840</div>
-          <div style="font-size:10px;color:var(--text-secondary);">Points</div>
+          <div style="font-size:18px;font-weight:700;color:var(--biolume);font-family:'Space Mono',monospace;" id="previousdives-stat-species">0</div>
+          <div style="font-size:10px;color:var(--text-secondary);">Species</div>
         </div>
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--biolume);font-family:'Space Mono',monospace;">127</div>
-          <div style="font-size:10px;color:var(--text-secondary);">Species</div>
+          <div style="font-size:18px;font-weight:700;color:var(--biolume);font-family:'Space Mono',monospace;" id="previousdives-stat-sightings">0</div>
+          <div style="font-size:10px;color:var(--text-secondary);">Sightings</div>
         </div>
       </div>
 
       <div class="section-label">ALL DIVES</div>
-      <div class="prev-dive-row" onclick="go('divestats')">
-        <div class="prev-dive-info">
-          <div class="prev-dive-name">Cod Hole, GBR</div>
-          <div class="prev-dive-date">12 Jun 2026 · 42 min · 18m</div>
-        </div>
-        <div class="prev-dive-right">
-          <div class="prev-dive-pts">+340</div>
-          <div class="prev-dive-species">14 species</div>
-        </div>
-        <div class="chevron">›</div>
-      </div>
-      <div class="prev-dive-row">
-        <div class="prev-dive-info">
-          <div class="prev-dive-name">Navy Pier, Ningaloo</div>
-          <div class="prev-dive-date">3 Jun 2026 · 38 min · 14m</div>
-        </div>
-        <div class="prev-dive-right">
-          <div class="prev-dive-pts">+210</div>
-          <div class="prev-dive-species">9 species</div>
-        </div>
-        <div class="chevron">›</div>
-      </div>
-      <div class="prev-dive-row">
-        <div class="prev-dive-info">
-          <div class="prev-dive-name">Manta Ray Bay</div>
-          <div class="prev-dive-date">28 May 2026 · 55 min · 22m</div>
-        </div>
-        <div class="prev-dive-right">
-          <div class="prev-dive-pts">+510</div>
-          <div class="prev-dive-species">19 species</div>
-        </div>
-        <div class="chevron">›</div>
-      </div>
-      <div class="prev-dive-row">
-        <div class="prev-dive-info">
-          <div class="prev-dive-name">Ribbon Reefs #10</div>
-          <div class="prev-dive-date">14 May 2026 · 48 min · 20m</div>
-        </div>
-        <div class="prev-dive-right">
-          <div class="prev-dive-pts">+180</div>
-          <div class="prev-dive-species">7 species</div>
-        </div>
-        <div class="chevron">›</div>
-      </div>
-      <div class="prev-dive-row">
-        <div class="prev-dive-info">
-          <div class="prev-dive-name">Osprey Reef, Coral Sea</div>
-          <div class="prev-dive-date">2 May 2026 · 60 min · 28m</div>
-        </div>
-        <div class="prev-dive-right">
-          <div class="prev-dive-pts">+620</div>
-          <div class="prev-dive-species">22 species</div>
-        </div>
-        <div class="chevron">›</div>
+      <div id="previousdives-list">
+        <div class="card" style="color:var(--text-secondary);font-size:13px;">No dives processed yet.</div>
       </div>
     </div>
 
@@ -1296,6 +1149,9 @@ function go(screen) {
   // hide status bar on splash
   document.getElementById('status-bar').style.display = screen === 'splash' ? 'none' : 'flex';
   if (screen === 'videoupload') resetUploadScreen();
+  if (screen === 'home') loadHomeData();
+  if (screen === 'previousdives') loadPreviousDives();
+  if (screen === 'fishdex') loadFishDex();
 }
 
 function resetUploadScreen() {
@@ -1481,6 +1337,7 @@ async function startAnalysis() {
         if (lbl) lbl.textContent = 'Done! ' + results.species_summary.length + ' species found';
         setTimeout(() => {
           go('report');
+          document.getElementById('report-subtitle').textContent = uploadedFilename + ' · just now';
           renderRealReport(results);
         }, 600);
       } else if (job.status === 'error') {
@@ -1580,6 +1437,135 @@ async function realExportCSV() {
 async function realExportPDF() {
   if (!currentJobId) { alert('No results yet. Process a video first.'); return; }
   window.location.href = API + '/jobs/' + currentJobId + '/report.pdf';
+}
+
+// ---- MODULE 7: Real dive history (Home / Previous Dives / Fish Dex) ----
+// Backed by GET /jobs (job history) and GET /species (catalog of
+// marine-detect's 18 known classes, tallied against every completed job).
+// There's no points/leaderboard/rarity data behind any of this -- those
+// stay as the existing static mockup content elsewhere in the app.
+
+function formatWhen(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) +
+    ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function jobStatusLabel(job) {
+  if (job.status === 'processing') return 'Processing...';
+  if (job.status === 'error') return 'Failed';
+  return (job.total_sightings || 0) + ' sightings';
+}
+
+function speciesLabel(species) {
+  return species.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+async function loadHomeData() {
+  try {
+    const [jobsRes, speciesRes] = await Promise.all([fetch(API + '/jobs'), fetch(API + '/species')]);
+    const jobsData = await jobsRes.json();
+    const speciesData = await speciesRes.json();
+    const doneJobs = jobsData.jobs.filter(j => j.status === 'done');
+
+    document.getElementById('stat-dives').textContent = doneJobs.length;
+    document.getElementById('stat-species').textContent = speciesData.species.filter(s => s.seen).length;
+    document.getElementById('stat-sightings').textContent = doneJobs.reduce((sum, j) => sum + (j.total_sightings || 0), 0);
+    document.getElementById('stat-flagged').textContent = doneJobs.reduce((sum, j) => sum + (j.flagged_count || 0), 0);
+
+    const recentEl = document.getElementById('home-recent-dives');
+    const recent = jobsData.jobs.slice(0, 3);
+    recentEl.innerHTML = recent.length === 0
+      ? '<div class="card" style="color:var(--text-secondary);font-size:13px;">No dives processed yet.</div>'
+      : recent.map(j => `
+        <div class="recent-dive-card" onclick="${j.status === 'done' ? `viewJobReport('${j.job_id}')` : ''}">
+          <div>
+            <div class="dive-name">${j.filename}</div>
+            <div class="dive-meta">${formatWhen(j.uploaded_at)} · ${jobStatusLabel(j)}</div>
+          </div>
+          <div>
+            <div class="dive-pts">${j.status === 'done' ? j.species_count : '—'}</div>
+            <div class="dive-pts-label">species</div>
+          </div>
+        </div>
+      `).join('');
+  } catch {
+    // server offline -- leave whatever was already rendered
+  }
+}
+
+async function loadPreviousDives() {
+  try {
+    const [jobsRes, speciesRes] = await Promise.all([fetch(API + '/jobs'), fetch(API + '/species')]);
+    const jobsData = await jobsRes.json();
+    const speciesData = await speciesRes.json();
+    const doneJobs = jobsData.jobs.filter(j => j.status === 'done');
+
+    document.getElementById('previousdives-subtitle').textContent = jobsData.jobs.length + ' dives total';
+    document.getElementById('previousdives-stat-dives').textContent = doneJobs.length;
+    document.getElementById('previousdives-stat-species').textContent = speciesData.species.filter(s => s.seen).length;
+    document.getElementById('previousdives-stat-sightings').textContent = doneJobs.reduce((sum, j) => sum + (j.total_sightings || 0), 0);
+
+    const listEl = document.getElementById('previousdives-list');
+    listEl.innerHTML = jobsData.jobs.length === 0
+      ? '<div class="card" style="color:var(--text-secondary);font-size:13px;">No dives processed yet.</div>'
+      : jobsData.jobs.map(j => `
+        <div class="prev-dive-row" onclick="${j.status === 'done' ? `viewJobReport('${j.job_id}')` : ''}">
+          <div class="prev-dive-info">
+            <div class="prev-dive-name">${j.filename}</div>
+            <div class="prev-dive-date">${formatWhen(j.uploaded_at)} · ${jobStatusLabel(j)}</div>
+          </div>
+          <div class="prev-dive-right">
+            <div class="prev-dive-species">${j.status === 'done' ? j.species_count + ' species' : ''}</div>
+          </div>
+          <div class="chevron">›</div>
+        </div>
+      `).join('');
+  } catch {
+    // server offline -- leave whatever was already rendered
+  }
+}
+
+async function loadFishDex() {
+  const grid = document.getElementById('dex-grid');
+  try {
+    const r = await fetch(API + '/species');
+    const data = await r.json();
+    document.getElementById('dex-subtitle').textContent =
+      data.species.filter(s => s.seen).length + ' of ' + data.species.length + ' species seen';
+
+    grid.innerHTML = data.species.map(s => `
+      <div class="dex-card ${s.seen ? 'seen' : 'unseen'}">
+        <div class="dex-dot ${s.seen ? 'seen' : 'unseen'}"></div>
+        <span class="dex-emoji">🐟</span>
+        <div class="dex-name">${speciesLabel(s.species)}</div>
+        <div class="dex-sci">${s.seen ? s.total_sightings + ' sightings' : 'Not yet spotted'}</div>
+      </div>
+    `).join('');
+  } catch {
+    grid.innerHTML = '<div class="card" style="grid-column:1/-1;color:var(--coral);font-size:13px;">Could not load species catalog. Is the server running?</div>';
+  }
+}
+
+async function viewJobReport(jobId) {
+  try {
+    const [resultsRes, jobsRes] = await Promise.all([
+      fetch(API + '/jobs/' + jobId + '/results'),
+      fetch(API + '/jobs'),
+    ]);
+    if (!resultsRes.ok) { alert("Could not load this dive's results."); return; }
+    const results = await resultsRes.json();
+    const jobsData = await jobsRes.json();
+    const job = jobsData.jobs.find(j => j.job_id === jobId);
+
+    currentJobId = jobId;
+    latestResults = results;
+    go('report');
+    document.getElementById('report-subtitle').textContent = job ? `${job.filename} · ${formatWhen(job.uploaded_at)}` : jobId;
+    renderRealReport(results);
+  } catch {
+    alert('Could not connect to server.');
+  }
 }
 
 function setLbTab(tab) {

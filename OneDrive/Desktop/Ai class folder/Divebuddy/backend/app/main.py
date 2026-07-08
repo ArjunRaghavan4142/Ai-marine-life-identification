@@ -1,3 +1,4 @@
+import datetime
 import json
 import pathlib
 import shutil
@@ -63,6 +64,7 @@ async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = Fil
     JOBS[job_id] = {
         "status": "processing",
         "video_name": file.filename,
+        "uploaded_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "error": None,
         "result": None,
     }
@@ -111,6 +113,44 @@ def get_job_or_404(job_id: str) -> dict:
     if job is None:
         raise HTTPException(status_code=404, detail="Unknown job_id")
     return job
+
+
+@app.get("/jobs")
+def list_jobs():
+    """Job history for the Home / Previous Dives screens, most recent first."""
+    jobs = []
+    for job_id, job in JOBS.items():
+        result = job.get("result")
+        jobs.append({
+            "job_id": job_id,
+            "filename": job["video_name"],
+            "status": job["status"],
+            "uploaded_at": job["uploaded_at"],
+            "species_count": len(result["species_summary"]) if result else None,
+            "total_sightings": sum(s["unique_count"] for s in result["species_summary"]) if result else None,
+            "flagged_count": len(result["review_queue"]) if result else None,
+        })
+    jobs.sort(key=lambda j: j["uploaded_at"], reverse=True)
+    return {"jobs": jobs}
+
+
+@app.get("/species")
+def species_catalog():
+    """Known species catalog (marine-detect's 18 classes) for the Fish Dex
+    screen, marked seen/unseen and tallied against every completed job."""
+    seen_counts: dict[str, int] = {}
+    for job in JOBS.values():
+        if job["status"] != "done":
+            continue
+        for row in job["result"]["species_summary"]:
+            seen_counts[row["species"]] = seen_counts.get(row["species"], 0) + row["unique_count"]
+
+    catalog = [
+        {"species": species, "seen": species in seen_counts, "total_sightings": seen_counts.get(species, 0)}
+        for species in RARITY_MAP
+    ]
+    catalog.sort(key=lambda s: (-s["seen"], s["species"]))
+    return {"species": catalog}
 
 
 @app.get("/jobs/{job_id}")

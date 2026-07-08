@@ -1,0 +1,40 @@
+# TrackTrack tuned for DiveBuddy's own confidence semantics.
+#
+# Stock tracktrack.yaml gates new-track creation on track_high_thresh (0.6),
+# not new_track_thresh (0.7) as the field name implies -- new_track_thresh
+# only applies to detections that already cleared track_high_thresh.
+# Lowering new_track_thresh alone did nothing (verified: min output
+# confidence stayed pinned at ~0.6 either way). track_high_thresh is the
+# actual gate, so it's lowered to match our own review_conf floor (0.30)
+# instead. Since review_conf already filters out everything below 0.30
+# before the tracker ever sees it, track_low_thresh's second-tier recovery
+# band is effectively unused here -- that's fine, our own aggregate.py
+# handles the accept-vs-flag distinction downstream via accept_conf.
+# Everything else is unchanged from ultralytics' tracktrack.yaml defaults,
+# including the camera-motion compensation (gmc_method) that fixed the
+# real fragmentation bug this tracker was chosen to solve.
+
+tracker_type: tracktrack
+track_high_thresh: 0.30
+track_low_thresh: 0.1
+new_track_thresh: 0.30
+track_buffer: 30
+match_thresh: 0.7
+lost_match_thr: 0.0
+
+iou_weight: 0.5
+reid_weight: 0.5
+conf_weight: 0.1
+angle_weight: 0.05
+
+penalty_p: 0.2
+penalty_q: 0.4
+reduce_step: 0.05
+
+tai_thr: 0.55
+min_track_len: 3
+
+gmc_method: sparseOptFlow
+
+with_reid: False
+model: auto

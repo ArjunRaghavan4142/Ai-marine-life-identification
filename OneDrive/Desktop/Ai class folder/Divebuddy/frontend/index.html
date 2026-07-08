@@ -1369,7 +1369,7 @@ checkServer();
 function realFileSelected(input) {
   const file = input.files[0];
   if (!file) return;
-  if (!file.name.endsWith('.mp4')) {
+  if (!file.name.toLowerCase().endsWith('.mp4')) {
     showUploadMsg('Only .mp4 files are accepted', 'error');
     return;
   }

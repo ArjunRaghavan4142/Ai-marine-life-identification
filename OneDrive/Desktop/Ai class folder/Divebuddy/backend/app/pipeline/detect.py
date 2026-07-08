@@ -2,9 +2,30 @@
 
 Runs each extracted frame through both marine-detect YOLOv8 checkpoints
 (FishInv: fish/invertebrates, MegaFauna: sharks/rays/turtles) using
-ultralytics' built-in ByteTrack tracker instead of plain detection, so that
+ultralytics' built-in TrackTrack tracker instead of plain detection, so that
 the same animal seen across consecutive frames keeps one track ID. That's
 what makes duplicate-count reduction possible downstream.
+
+Uses TrackTrack (tracker_type: tracktrack), not the more commonly-used
+ByteTrack, because real handheld dive footage pans and shakes constantly.
+ByteTrack has no camera-motion compensation, so on a real dive clip the
+same stationary fish appeared to "move" every frame just from camera pan,
+which fragmented single fish into dozens of spurious tracks (confirmed:
+one 20s clip went from 14 to 69 "unique" fish just from denser sampling
+with ByteTrack, because it made the fragmentation worse, not better).
+TrackTrack has built-in global motion compensation (gmc_method) plus
+explicit duplicate-ID suppression, which is exactly the failure mode this
+hit -- and coincidentally, this is also literally what the original
+DiveBuddy doc named ("TrackTrack from yolo"), which turned out to be a
+real tracker after all, not a mistranscription of ByteTrack.
+
+Uses a custom tracker config (tracktrack_divebuddy.yaml) rather than the
+stock tracktrack.yaml: stock sets new_track_thresh=0.7, which silently
+drops any detection between our review_conf floor and 0.7 that doesn't
+match an existing track, instead of letting it surface in the low-
+confidence review queue. The custom config lowers that to match
+review_conf so nothing vanishes between the detector and our own
+aggregation logic.
 """
 import pathlib
 
@@ -12,6 +33,7 @@ import cv2
 from ultralytics import YOLO
 
 MODELS_DIR = pathlib.Path(__file__).resolve().parent.parent / "models"
+TRACKER_CONFIG = pathlib.Path(__file__).resolve().parent / "tracktrack_divebuddy.yaml"
 
 # `accept_conf` is marine-detect's own recommended threshold: detections at or
 # above this are auto-counted. We run the tracker at a lower `review_conf` floor
@@ -46,7 +68,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
                 source=str(frame["path"]),
                 conf=config["review_conf"],
                 persist=True,
-                tracker="bytetrack.yaml",
+                tracker=str(TRACKER_CONFIG),
                 verbose=False,
             )[0]
 

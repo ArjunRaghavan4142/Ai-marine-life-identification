@@ -51,7 +51,7 @@ def root():
 
 @app.post("/upload")
 async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    if not file.filename.endswith(".mp4"):
+    if not file.filename.lower().endswith(".mp4"):
         raise HTTPException(status_code=400, detail="Only .mp4 files are accepted")
 
     job_id = uuid.uuid4().hex[:12]
@@ -74,7 +74,16 @@ async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = Fil
 def process_video(job_id: str, video_path: pathlib.Path) -> None:
     job_dir = OUTPUT_DIR / job_id
     try:
-        frames = extract_frames(video_path, job_dir / "frames", fps_sample=1.0)
+        # 5 fps balances two failure modes found while testing on real dive
+        # footage: too sparse (1-2 fps) and TrackTrack simply stops finding new
+        # animals in the back half of a clip as the camera pans to new reef --
+        # verified on a 20s test clip where 2 fps found nothing new after 7s
+        # despite the clip running to 20s, while 5 fps kept finding new fish
+        # through the very end. Denser sampling is ~5x the inference cost, but
+        # under-counting real sightings is worse than mild over-counting for a
+        # biodiversity survey tool. On CPU this does not scale to full-length
+        # (20-60 min) dive videos -- expect hours, not minutes -- see README.
+        frames = extract_frames(video_path, job_dir / "frames", fps_sample=5.0)
         detections = run_detection(frames, job_dir / "crops")
 
         # Store crop paths relative to OUTPUT_DIR so they can be served directly

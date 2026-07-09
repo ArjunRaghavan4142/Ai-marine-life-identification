@@ -51,6 +51,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_CONFIGS = [
     {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.523, "review_conf": 0.30},
     {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.546, "review_conf": 0.30},
+    {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.45, "review_conf": 0.30},
 ]
 
 
@@ -108,5 +109,9 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
                     "timestamp_sec": frame["timestamp_sec"],
                     "crop_path": str(crop_path) if crop.size > 0 else None,
                 })
+
+        del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     return detections

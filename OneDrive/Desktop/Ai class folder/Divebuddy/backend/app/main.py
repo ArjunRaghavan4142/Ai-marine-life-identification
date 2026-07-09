@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.pipeline.aggregate import aggregate_tracks
+from app.pipeline.aggregate import aggregate_tracks, common_name
 from app.pipeline.detect import run_detection
 from app.pipeline.frames import extract_frames
 from app.pipeline.report import generate_csv, generate_pdf
@@ -146,7 +146,7 @@ def species_catalog():
             seen_counts[row["species"]] = seen_counts.get(row["species"], 0) + row["unique_count"]
 
     catalog = [
-        {"species": species, "seen": species in seen_counts, "total_sightings": seen_counts.get(species, 0)}
+        {"species": common_name(species), "seen": species in seen_counts, "total_sightings": seen_counts.get(species, 0)}
         for species in RARITY_MAP
     ]
     catalog.sort(key=lambda s: (-s["seen"], s["species"]))

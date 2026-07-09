@@ -6,3 +6,6 @@ backend/uploads/
 backend/outputs/
 _extracted/
 divebuddy.zip
+datasets/roboflow/
+datasets/fishnet/
+datasets/lila/

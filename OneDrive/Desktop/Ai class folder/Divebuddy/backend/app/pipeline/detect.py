@@ -49,9 +49,10 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # silently dropped -- they surface in the low-confidence review queue instead
 # of just vanishing.
 MODEL_CONFIGS = [
-    {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.523, "review_conf": 0.30},
-    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.546, "review_conf": 0.30},
-    {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.45, "review_conf": 0.30},
+    {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.80, "review_conf": 0.30},
+    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.80, "review_conf": 0.30},
+    # Seychelles disabled until training completes (epoch 40/80 produces too many false positives)
+    # {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30},
 ]
 
 
@@ -76,6 +77,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
             result = model.track(
                 source=str(frame["path"]),
                 conf=config["review_conf"],
+                imgsz=640,
                 persist=True,
                 tracker=str(TRACKER_CONFIG),
                 verbose=False,

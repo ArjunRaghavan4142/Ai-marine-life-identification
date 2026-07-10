@@ -85,7 +85,8 @@ def process_video(job_id: str, video_path: pathlib.Path) -> None:
         # under-counting real sightings is worse than mild over-counting for a
         # biodiversity survey tool. On CPU this does not scale to full-length
         # (20-60 min) dive videos -- expect hours, not minutes -- see README.
-        frames = extract_frames(video_path, job_dir / "frames", fps_sample=5.0)
+        extraction = extract_frames(video_path, job_dir / "frames", fps_sample=5.0)
+        frames = extraction["frames"]
         detections = run_detection(frames, job_dir / "crops")
 
         # Store crop paths relative to OUTPUT_DIR so they can be served directly

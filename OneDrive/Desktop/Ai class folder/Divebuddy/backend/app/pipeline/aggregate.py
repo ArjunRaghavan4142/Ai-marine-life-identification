@@ -3,10 +3,13 @@
 Two things happen here that the raw detection list can't give you on its own:
   - duplicate-count reduction: a track (one animal followed across frames)
     counts once per species, not once per frame it appeared in
+  - cross-model dedup: when multiple models detect the same physical fish
+    on the same frame, only the highest-confidence detection survives
   - low-confidence review: a track that never crossed its model's accept
     threshold in any frame goes into a review queue instead of being counted
 """
 from collections import Counter, defaultdict
+from itertools import combinations
 
 COMMON_NAMES: dict[str, str] = {
     # FishInv / MegaFauna model classes
@@ -393,6 +396,502 @@ COMMON_NAMES: dict[str, str] = {
     "Zanclus canescens": "Moorish Idol",
     "Zebrasoma desjardinii": "Desjardin's Sailfin Tang",
     "Zebrasoma scopas": "Brown Tang",
+    # ReefFamilies model classes (13 families)
+    "Acanthuridae -Surgeonfishes-": "Surgeonfish",
+    "Balistidae -Triggerfishes-": "Triggerfish",
+    "Carangidae -Jacks-": "Jack",
+    "Ephippidae -Spadefishes-": "Spadefish",
+    "Labridae -Wrasse-": "Wrasse",
+    "Lutjanidae -Snappers-": "Snapper",
+    "Pomacanthidae -Angelfishes-": "Angelfish",
+    "Pomacentridae -Damselfishes-": "Damselfish",
+    "Scaridae -Parrotfishes-": "Parrotfish",
+    "Scombridae -Tunas-": "Tuna",
+    "Serranidae -Groupers-": "Grouper",
+    "Shark -Selachimorpha-": "Shark",
+    "Zanclidae -Moorish Idol-": "Moorish Idol",
+    # FishSpecies model classes (481 species)
+    "A73EGS-P_5": "Unknown Fish",
+    "CUNWCB-Y": "Unknown Fish",
+    "Istiophorus_platypterus": "Indo-Pacific Sailfish",
+    "P1ROZC-Z": "Unknown Fish",
+    "PQV7DP-S": "Unknown Fish",
+    "acanthaluteres_brownii": "Brownii Leatherjacket",
+    "acanthaluteres_spilomelanurus": "Spilomelanurus Leatherjacket",
+    "acanthaluteres_vittiger": "Vittiger Leatherjacket",
+    "acanthistius_cinctus": "Acanthistius Cinctus",
+    "acanthopagrus_australis": "Australis Sea Bream",
+    "acanthopagrus_berda": "Berda Sea Bream",
+    "acanthopagrus_latus": "Latus Sea Bream",
+    "achoerodus_gouldii": "Western Blue Groper",
+    "achoerodus_viridis": "Eastern Blue Groper",
+    "acreichthys_tomentosus": "Tomentosus Filefish",
+    "aesopia_cornuta": "Cornuta Sole",
+    "aethaloperca_rogaa": "Rogaa Redmouth Grouper",
+    "alectis_ciliaris": "Ciliaris Pompano",
+    "alectis_indica": "Indica Pompano",
+    "alepes_kleinii": "Kleinii Scad",
+    "aluterus_monoceros": "Monoceros Filefish",
+    "aluterus_scriptus": "Scriptus Filefish",
+    "amanses_scopas": "Scopas Filefish",
+    "anampses_caeruleopunctatus": "Caeruleopunctatus Wrasse",
+    "anampses_elegans": "Elegans Wrasse",
+    "anampses_femininus": "Femininus Wrasse",
+    "anampses_geographicu": "Geographicu Wrasse",
+    "anampses_lennardi": "Lennardi Wrasse",
+    "anampses_melanurus": "Melanurus Wrasse",
+    "anampses_meleagrides": "Meleagrides Wrasse",
+    "anampses_neoguinaicus": "Neoguinaicus Wrasse",
+    "anampses_twistii": "Twistii Wrasse",
+    "anodontostoma_chacunda": "Chacunda Gizzard Shad",
+    "anyperodon_leucogrammicus": "Leucogrammicus Slender Grouper",
+    "aphareus_furca": "Small-toothed Jobfish",
+    "aphareus_rutilans": "Rusty Jobfish",
+    "aprion_virescens": "Green Jobfish",
+    "argyrops_spinifer": "Spinifer Sea Bream",
+    "aseraggodes_melanostictus": "Melanostictus Sole",
+    "atractoscion_aequidens": "Aequidens Geelbek",
+    "atule_mate": "Mate Yellowtail Scad",
+    "auxis_rochei": "Bullet Tuna",
+    "auxis_thazard": "Frigate Tuna",
+    "bathylagichthys_greyae": "Greyae Deep-sea Smelt",
+    "beryx_decadactylus": "Decadactylus Alfonsino",
+    "bodianus_anthioides": "Anthioides Hogfish",
+    "bodianus_axillaris": "Axilspot Hogfish",
+    "bodianus_bilunulatus": "Bilunulatus Hogfish",
+    "bodianus_bimaculatus": "Bimaculatus Hogfish",
+    "bodianus_diana": "Diana's Hogfish",
+    "bodianus_loxozonus": "Loxozonus Hogfish",
+    "bodianus_mesothorax": "Mesothorax Hogfish",
+    "bodianus_perditio": "Perditio Hogfish",
+    "bodianus_unimaculatus": "Unimaculatus Hogfish",
+    "bodianus_vulpinus": "Vulpinus Hogfish",
+    "bothus_mancus": "Mancus Flounder",
+    "bothus_myriaster": "Myriaster Flounder",
+    "bothus_pantherinus": "Pantherinus Flounder",
+    "brachaluteres_jacksonianus": "Jacksonianus Pygmy Leatherjacket",
+    "brachirus_orientalis": "Orientalis Sole",
+    "caesioperca_lepidopterus": "Lepidopterus Butterfly Perch",
+    "cantherhines_dumerilii": "Dumerilii Filefish",
+    "cantherhines_fronticinctus": "Fronticinctus Filefish",
+    "cantherhines_pardalis": "Pardalis Filefish",
+    "cantheschenia_grandisquamis": "Grandisquamis Leatherjacket",
+    "caprodon_longimanus": "Longimanus Perch",
+    "caprodon_schlegelii": "Schlegelii Perch",
+    "carangoides_caeruleopinnatus": "Caeruleopinnatus Trevally",
+    "carangoides_chrysophrys": "Chrysophrys Trevally",
+    "carangoides_equula": "Equula Trevally",
+    "carangoides_ferdau": "Ferdau Trevally",
+    "carangoides_fulvoguttatus": "Fulvoguttatus Trevally",
+    "carangoides_hedlandensis": "Hedlandensis Trevally",
+    "carangoides_malabaricus": "Malabaricus Trevally",
+    "carangoides_orthogrammus": "Orthogrammus Trevally",
+    "carangoides_plagiotaenia": "Plagiotaenia Trevally",
+    "caranx_ignobilis": "Giant Trevally",
+    "caranx_lugubris": "Black Jack",
+    "caranx_melampygus": "Bluefin Trevally",
+    "caranx_sexfasciatus": "Bigeye Trevally",
+    "carcharhinus_albimarginatu": "Silvertip Shark",
+    "carcharhinus_amblyrhynchos": "Grey Reef Shark",
+    "carcharhinus_falciformis": "Silky Shark",
+    "carcharhinus_galapagensis": "Galapagos Shark",
+    "carcharhinus_limbatus": "Blacktip Shark",
+    "carcharhinus_melanopterus": "Blacktip Reef Shark",
+    "carcharhinus_obscurus": "Dusky Shark",
+    "carcharhinus_plumbeus": "Sandbar Shark",
+    "carcharhinus_sorrah": "Spottail Shark",
+    "centroberyx_affinis": "Affinis Nannygai",
+    "centrogenys_vaigiensis": "Vaigiensis False Scorpionfish",
+    "centroscymnus_coelolepis": "Portuguese Dogfish",
+    "cephalopholis_argus": "Peacock Grouper",
+    "cephalopholis_boenak": "Boenak Grouper",
+    "cephalopholis_cyanostigma": "Cyanostigma Grouper",
+    "cephalopholis_formosa": "Formosa Grouper",
+    "cephalopholis_igarashiensis": "Igarashiensis Grouper",
+    "cephalopholis_leopardus": "Leopardus Grouper",
+    "cephalopholis_microprion": "Microprion Grouper",
+    "cephalopholis_miniata": "Coral Hind",
+    "cephalopholis_sexmaculata": "Sexmaculata Grouper",
+    "cephalopholis_sonnerati": "Sonnerati Grouper",
+    "cephalopholis_spiloparaea": "Spiloparaea Grouper",
+    "chascanopsetta_lugubris": "Lugubris Flounder",
+    "cheilinus_chlorourus": "Chlorourus Wrasse",
+    "cheilinus_fasciatus": "Fasciatus Wrasse",
+    "cheilinus_oxycephalus": "Oxycephalus Wrasse",
+    "cheilinus_trilobatus": "Trilobatus Wrasse",
+    "cheilinus_undulatus": "Humphead Wrasse",
+    "cheilio_inermis": "Inermis Cigar Wrasse",
+    "cheilodactylus_ephippium": "Ephippium Morwong",
+    "cheilodactylus_fuscus": "Fuscus Morwong",
+    "cheilodactylus_vestitus": "Vestitus Morwong",
+    "chelidonichthys_kumu": "Kumu Gurnard",
+    "chirocentrus_dorab": "Dorab Wolf Herring",
+    "chirocentrus_nudus": "Nudus Wolf Herring",
+    "choerodon_anchorago": "Orange-dotted Tuskfish",
+    "choerodon_cauteroma": "Cauteroma Tuskfish",
+    "choerodon_cyanodus": "Cyanodus Tuskfish",
+    "choerodon_fasciatus": "Harlequin Tuskfish",
+    "choerodon_graphicus": "Graphicus Tuskfish",
+    "choerodon_jordani": "Jordani Tuskfish",
+    "choerodon_rubescens": "Rubescens Tuskfish",
+    "choerodon_schoenleinii": "Blackspot Tuskfish",
+    "choerodon_venustus": "Venustus Tuskfish",
+    "choerodon_vitta": "Vitta Tuskfish",
+    "choerodon_zamboangae": "Zamboangae Tuskfish",
+    "chromileptes_altivelis": "Humpback Grouper",
+    "cirrhilabrus_bathyphilus": "Bathyphilus Fairy Wrasse",
+    "cirrhilabrus_condei": "Condei Fairy Wrasse",
+    "cirrhilabrus_cyanopleura": "Cyanopleura Fairy Wrasse",
+    "cirrhilabrus_exquisitus": "Exquisitus Fairy Wrasse",
+    "cirrhilabrus_laboutei": "Laboutei Fairy Wrasse",
+    "cirrhilabrus_punctatus": "Punctatus Fairy Wrasse",
+    "cirrhilabrus_scottorum": "Scottorum Fairy Wrasse",
+    "cirrhilabrus_temminckii": "Temminckii Fairy Wrasse",
+    "coris_aygula": "Clown Coris",
+    "coris_batuensis": "Batuensis Wrasse",
+    "coris_bulbifrons": "Bulbifrons Wrasse",
+    "coris_caudimacula": "Caudimacula Wrasse",
+    "coris_dorsomacula": "Dorsomacula Wrasse",
+    "coris_gaimard": "Gaimard Wrasse",
+    "coris_picta": "Picta Wrasse",
+    "coris_pictoides": "Pictoides Wrasse",
+    "coris_sandeyeri": "Sandeyeri Wrasse",
+    "crenimugil_crenilabis_2": "Crenilabis 2 Fringelip Mullet",
+    "cymbacephalus_nematophthalmus": "Nematophthalmus Crocodile Flathead",
+    "cymolutes_praetextatus": "Praetextatus Razorfish",
+    "cymolutes_torquatus": "Torquatus Razorfish",
+    "cynoglossus_puncticeps": "Puncticeps Tongue Sole",
+    "cyttopsis_rosea": "Rosea Dory",
+    "dactylophora_nigricans": "Nigricans Banjo Shark",
+    "decapterus_macrosoma": "Macrosoma Mackerel Scad",
+    "decapterus_russelli": "Russelli Mackerel Scad",
+    "diproctacanthus_xanthurus": "Xanthurus Wrasse",
+    "dotalabrus_aurantiacus": "Aurantiacus Wrasse",
+    "elagatis_bipinnulata": "Rainbow Runner",
+    "epibulus_insidiator": "Sling-jaw Wrasse",
+    "epinephelus_areolatus": "Areolatus Grouper",
+    "epinephelus_bleekeri": "Bleekeri Grouper",
+    "epinephelus_chlorostigma": "Chlorostigma Grouper",
+    "epinephelus_coeruleopunctatus": "Coeruleopunctatus Grouper",
+    "epinephelus_coioides": "Orange-spotted Grouper",
+    "epinephelus_corallicola": "Corallicola Grouper",
+    "epinephelus_cyanopodus": "Cyanopodus Grouper",
+    "epinephelus_epistictus": "Epistictus Grouper",
+    "epinephelus_fasciatus": "Blacktip Grouper",
+    "epinephelus_fuscoguttatus": "Brown-marbled Grouper",
+    "epinephelus_hexagonatus": "Hexagonatus Grouper",
+    "epinephelus_howlandi": "Howlandi Grouper",
+    "epinephelus_lanceolatus": "Giant Grouper",
+    "epinephelus_latifasciatus": "Latifasciatus Grouper",
+    "epinephelus_macrospilos": "Macrospilos Grouper",
+    "epinephelus_maculatus": "Maculatus Grouper",
+    "epinephelus_melanostigma": "Melanostigma Grouper",
+    "epinephelus_merra": "Honeycomb Grouper",
+    "epinephelus_morrhua": "Morrhua Grouper",
+    "epinephelus_multinotatus": "Multinotatus Grouper",
+    "epinephelus_ongus": "Ongus Grouper",
+    "epinephelus_polyphekadion": "Polyphekadion Grouper",
+    "epinephelus_quoyanus": "Quoyanus Grouper",
+    "epinephelus_radiatus": "Radiatus Grouper",
+    "epinephelus_retouti": "Retouti Grouper",
+    "epinephelus_rivulatus": "Rivulatus Grouper",
+    "epinephelus_sexfasciatus": "Sexfasciatus Grouper",
+    "epinephelus_spilotoceps": "Spilotoceps Grouper",
+    "epinephelus_tauvina": "Tauvina Grouper",
+    "epinephelus_undulatostriatus": "Undulatostriatus Grouper",
+    "etelis_carbunculus": "Carbunculus Ruby Snapper",
+    "etelis_coruscan": "Coruscan Ruby Snapper",
+    "eubalichthys_cyanoura": "Cyanoura Leatherjacket",
+    "eubalichthys_mosaicus": "Mosaicus Leatherjacket",
+    "eupetrichthys_angustipes": "Angustipes Snakeblenny",
+    "euthynnus_affinis": "Kawakawa",
+    "evistias_acutirostris": "Acutirostris Striped Boarfish",
+    "gempylus_serpens": "Serpens Snake Mackerel",
+    "gnathanodon_speciosus": "Golden Trevally",
+    "gnathodentex_aureolineatus": "Striped Large-eye Bream",
+    "gracila_albomarginata": "Masked Grouper",
+    "gymnocranius_audleyi": "Audleyi Large-eye Bream",
+    "gymnocranius_euanus": "Euanus Large-eye Bream",
+    "gymnocranius_grandoculis": "Grandoculis Large-eye Bream",
+    "gymnocranius_microdon": "Microdon Large-eye Bream",
+    "gymnosarda_unicolor": "Dogtooth Tuna",
+    "halichoeres_argus": "Argus Wrasse",
+    "halichoeres_biocellatus": "Biocellatus Wrasse",
+    "halichoeres_chloropterus": "Chloropterus Wrasse",
+    "halichoeres_chrysus": "Chrysus Wrasse",
+    "halichoeres_hartzfeldii": "Hartzfeldii Wrasse",
+    "halichoeres_hortulanus": "Hortulanus Wrasse",
+    "halichoeres_leucurus": "Leucurus Wrasse",
+    "halichoeres_margaritaceus": "Margaritaceus Wrasse",
+    "halichoeres_melanochir": "Melanochir Wrasse",
+    "halichoeres_melanurus": "Melanurus Wrasse",
+    "halichoeres_melasmapomus": "Melasmapomus Wrasse",
+    "halichoeres_nebulosus": "Nebulosus Wrasse",
+    "halichoeres_nigrescens": "Nigrescens Wrasse",
+    "halichoeres_scapularis": "Scapularis Wrasse",
+    "halichoeres_trimaculatus": "Trimaculatus Wrasse",
+    "harriotta_raleighana": "Pacific Longnose Chimaera",
+    "hemigymnus_fasciatus": "Barred Thicklip Wrasse",
+    "hemigymnus_melapterus": "Blackeye Thicklip Wrasse",
+    "hemiramphus_far": "Black-barred Halfbeak",
+    "hemiramplutjanus_semicinctus_quoyhus_far": "Hemiramplutjanus Semicinctus Quoyhus Far",
+    "herklotsichthys_quadrimaculatus": "Quadrimaculatus Herring",
+    "hologymnosus_annulatus": "Ring Wrasse",
+    "hologymnosus_doliatus": "Pastel Ring Wrasse",
+    "hyporhamphus_affinis": "Affinis Halfbeak",
+    "hyporhamphus_dussumieri": "Dussumieri Halfbeak",
+    "inegocia_japonica": "Japonica Flathead",
+    "johnius_borneensis": "Borneensis Croaker",
+    "katsuwonus_pelamis": "Skipjack Tuna",
+    "labrichthys_unilineatus": "Unilineatus Tubelip Wrasse",
+    "labroides_bicolor": "Bicolor Cleaner Wrasse",
+    "labroides_dimidiatus": "Bluestreak Cleaner Wrasse",
+    "labroides_pectoralis": "Pectoralis Cleaner Wrasse",
+    "labropsis_australis": "Australis Wrasse",
+    "labropsis_manabei": "Manabei Wrasse",
+    "labropsis_xanthonota": "Xanthonota Wrasse",
+    "latridopsis_forsteri": "Forsteri Trumpeter",
+    "lepidocybium_flavobrunneum": "Escolar",
+    "leptojulis_cyanopleura": "Cyanopleura Wrasse",
+    "lethrinus_amboinensis": "Ambon Emperor",
+    "lethrinus_atkinsoni": "Pacific Yellowtail Emperor",
+    "lethrinus_erythracanthus": "Orange-spotted Emperor",
+    "lethrinus_genivittatus": "Threadfin Emperor",
+    "lethrinus_harak": "Thumbprint Emperor",
+    "lethrinus_lentjan": "Pink-ear Emperor",
+    "lethrinus_microdon": "Smalltooth Emperor",
+    "lethrinus_miniatus": "Trumpet Emperor",
+    "lethrinus_nebulosus": "Spangled Emperor",
+    "lethrinus_obsoletus": "Orange-striped Emperor",
+    "lethrinus_olivaceus": "Longface Emperor",
+    "lethrinus_ornatus": "Ornate Emperor",
+    "lethrinus_rubrioperculatus": "Spotcheek Emperor",
+    "lethrinus_semicinctus": "Black Blotch Emperor",
+    "lethrinus_variegatus": "Slender Emperor",
+    "lethrinus_xanthochilus": "Yellowlip Emperor",
+    "liopropoma_mitratum": "Mitratum Basslet",
+    "liopropoma_susumi": "Susumi Basslet",
+    "liza_subviridis": "Subviridis Mullet",
+    "liza_vaigiensis": "Vaigiensis Mullet",
+    "lniistius_aneitensis": "Aneitensis Razorfish",
+    "lniistius_pavo": "Pavo Razorfish",
+    "lutjanus_adetii": "Adetii Snapper",
+    "lutjanus_argentimaculatus": "Mangrove Red Snapper",
+    "lutjanus_biguttatus": "Biguttatus Snapper",
+    "lutjanus_bohar": "Two-spot Red Snapper",
+    "lutjanus_carponotatus": "Carponotatus Snapper",
+    "lutjanus_decussatus": "Decussatus Snapper",
+    "lutjanus_ehrenbergii": "Blackspot Snapper",
+    "lutjanus_erythropterus": "Erythropterus Snapper",
+    "lutjanus_fulviflamma": "Dory Snapper",
+    "lutjanus_fulvus": "Blacktail Snapper",
+    "lutjanus_gibbus": "Humpback Red Snapper",
+    "lutjanus_johnii": "Johnii Snapper",
+    "lutjanus_kasmira": "Bluestripe Snapper",
+    "lutjanus_lemniscatus": "Lemniscatus Snapper",
+    "lutjanus_lutjanus": "Lutjanus Snapper",
+    "lutjanus_malabaricus": "Malabaricus Snapper",
+    "lutjanus_monostigma": "Monostigma Snapper",
+    "lutjanus_quinquelineatus": "Quinquelineatus Snapper",
+    "lutjanus_rivulatus": "Blubberlip Snapper",
+    "lutjanus_russellii": "Russellii Snapper",
+    "lutjanus_sebae": "Emperor Red Snapper",
+    "lutjanus_semicinctus": "Semicinctus Snapper",
+    "lutjanus_timoriensis": "Timoriensis Snapper",
+    "lutjanus_vitta": "Vitta Snapper",
+    "macolor_macularis": "Midnight Snapper",
+    "macolor_niger": "Black and White Snapper",
+    "macropharyngodon_choati": "Choati Leopard Wrasse",
+    "macropharyngodon_kuiteri": "Kuiteri Leopard Wrasse",
+    "macropharyngodon_meleagris": "Meleagris Leopard Wrasse",
+    "macropharyngodon_negrosensis": "Negrosensis Leopard Wrasse",
+    "macropharyngodon_ornatus": "Ornatus Leopard Wrasse",
+    "megalaspis_cordyla": "Cordyla Torpedo Scad",
+    "meuschenia_australis": "Australis Leatherjacket",
+    "meuschenia_freycineti": "Freycineti Leatherjacket",
+    "meuschenia_galii": "Galii Leatherjacket",
+    "meuschenia_hippocrepis": "Hippocrepis Leatherjacket",
+    "meuschenia_scaber": "Scaber Leatherjacket",
+    "meuschenia_trachylepis": "Trachylepis Leatherjacket",
+    "monacanthus_chinensis": "Chinensis Filefish",
+    "monotaxis_grandoculis": "Humpnose Big-eye Bream",
+    "mugim_cephalus": "Cephalus Mullet",
+    "naucrates_ductor": "Ductor Pilotfish",
+    "negaprion_acutidens": "Sicklefin Lemon Shark",
+    "nemadactylus_douglasii": "Douglasii Morwong",
+    "nemipterus_furcosus": "Furcosus Threadfin Bream",
+    "nemipterus_hexodon": "Hexodon Threadfin Bream",
+    "nemipterus_peronii": "Peronii Threadfin Bream",
+    "netuma_thalassina": "Thalassina Catfish",
+    "nibea_soldado": "Soldado Croaker",
+    "notolabrus_fucicola": "Fucicola Wrasse",
+    "notolabrus_gymnogenis": "Gymnogenis Wrasse",
+    "notolabrus_tetricus": "Tetricus Wrasse",
+    "notorynchus_cepedianus": "Sevengill Shark",
+    "novaculichthys_taeniourus": "Rockmover Wrasse",
+    "novaculoides_macrolepidotus": "Macrolepidotus Razorfish",
+    "oedalechilus_labiosus": "Labiosus Mullet",
+    "ophthalmolepis_lineolatus": "Lineolatus Wrasse",
+    "otolithes_ruber": "Ruber Croaker",
+    "oxycheilinus_bimaculatus": "Bimaculatus Wrasse",
+    "oxycheilinus_celebicus": "Celebicus Wrasse",
+    "oxycheilinus_digrammus": "Digrammus Wrasse",
+    "oxycheilinus_unifasciatus": "Unifasciatus Wrasse",
+    "oxymonacanthus_longirostris": "Longnose Filefish",
+    "pagrus_auratus": "Australasian Snapper",
+    "paracaesio_kusakarii": "Kusakarii Fusilier",
+    "paracheilinus_filamentosus": "Filamentosus Flasher Wrasse",
+    "paraluteres_prionurus": "Prionurus Filefish",
+    "paramonacanthus_choirocephalus": "Choirocephalus Filefish",
+    "paraplagusia_bilineata": "Bilineata Tongue Sole",
+    "parastromateus_niger": "Black Pomfret",
+    "pardachirus_hedleyi": "Hedleyi Sole",
+    "pardachirus_pavoninus": "Pavoninus Sole",
+    "pentapodus_aureofasciatus": "Aureofasciatus Threadfin Bream",
+    "pentapodus_paradiseus": "Paradiseus Threadfin Bream",
+    "pentapodus_vitta_quoy": "Vitta Quoy Threadfin Bream",
+    "pervagor_alternans": "Alternans Filefish",
+    "pervagor_janthinosoma": "Janthinosoma Filefish",
+    "pervagor_melanocephalus": "Melanocephalus Filefish",
+    "pervagor_nigrolineatus": "Nigrolineatus Filefish",
+    "pinjalo_lewisi": "Lewisi Snapper",
+    "platycephalus_indicus": "Indicus Flathead",
+    "plectranthias_longimanus": "Longimanus Perchlet",
+    "plectranthias_nanus": "Nanus Perchlet",
+    "plectranthias_winniensis": "Winniensis Perchlet",
+    "plectropomus_areolatus": "Squaretail Coral Trout",
+    "plectropomus_laevis": "Blacksaddled Coral Trout",
+    "plectropomus_leopardus": "Leopard Coral Trout",
+    "plectropomus_maculatus": "Spotted Coral Trout",
+    "plectropomus_oligacanthus": "Highfin Coral Trout",
+    "plotosus_lineatus": "Striped Catfish",
+    "pristipomoides_argyrogrammicus": "Argyrogrammicus Snapper",
+    "pristipomoides_auricilla": "Auricilla Snapper",
+    "pristipomoides_filamentosus": "Filamentosus Snapper",
+    "pristipomoides_flavipinnis": "Flavipinnis Snapper",
+    "pristipomoides_sieboldii": "Sieboldii Snapper",
+    "pristipomoides_zonatus": "Zonatus Snapper",
+    "promethichthys_prometheus": "Prometheus Snake Mackerel",
+    "protonibea_diacanthus": "Diacanthus Black-spotted Croaker",
+    "psettodes_erumei": "Erumei Flounder",
+    "pseudalutarius_nasicornis": "Nasicornis Filefish",
+    "pseudanthias_bicolor": "Bicolor Anthias",
+    "pseudanthias_cooperi": "Cooperi Anthias",
+    "pseudanthias_dispar": "Peach Fairy Basslet",
+    "pseudanthias_fasciatus": "Fasciatus Anthias",
+    "pseudanthias_huchtii": "Red-cheeked Anthias",
+    "pseudanthias_hypselosoma": "Hypselosoma Anthias",
+    "pseudanthias_lori": "Lori Anthias",
+    "pseudanthias_luzonensis": "Luzonensis Anthias",
+    "pseudanthias_pictilis": "Pictilis Anthias",
+    "pseudanthias_pleurotaenia": "Square-spot Anthias",
+    "pseudanthias_rubrizonatus": "Rubrizonatus Anthias",
+    "pseudanthias_sheni": "Sheni Anthias",
+    "pseudanthias_smithvanizi": "Smithvanizi Anthias",
+    "pseudanthias_squamipinnis": "Sea Goldie",
+    "pseudanthias_tuka": "Purple Queen",
+    "pseudanthias_ventralis": "Ventralis Anthias",
+    "pseudocaranx_dentex": "Dentex Trevally",
+    "pseudocarcharias_kamoharai": "Crocodile Shark",
+    "pseudocheilinus_evanidus": "Evanidus Wrasse",
+    "pseudocheilinus_hexataenia": "Sixline Wrasse",
+    "pseudocheilinus_ocellatus": "Ocellatus Wrasse",
+    "pseudocheilinus_octotaenia": "Octotaenia Wrasse",
+    "pseudodax_moluccanus": "Moluccanus Chiseltooth Wrasse",
+    "pseudojuloides_cerasinus": "Cerasinus Wrasse",
+    "pseudolabrus_biserialis": "Biserialis Wrasse",
+    "pseudolabrus_guentheri": "Guentheri Wrasse",
+    "pseudolabrus_luculentus": "Luculentus Wrasse",
+    "pseudorhombus_argus": "Argus Flounder",
+    "pseudorhombus_arsius": "Arsius Flounder",
+    "pseudorhombus_elevatus": "Elevatus Flounder",
+    "pteragogus_cryptus": "Cryptus Wrasse",
+    "pteragogus_enneacanthus": "Enneacanthus Wrasse",
+    "pteragogus_flagellifer": "Flagellifer Wrasse",
+    "rastrelliger_kanagurta": "Indian Mackerel",
+    "retropinna_semoni": "Semoni Smelt",
+    "rhabdosargus_sarba": "Sarba Stumpnose",
+    "rhincodon_typus": "Whale Shark",
+    "rhizoprionodon_acutus": "Milk Shark",
+    "ruvettus_pretiosus": "Oilfish",
+    "samaris_cristatus": "Cristatus Flounder",
+    "samariscus_triocellatus": "Triocellatus Flounder",
+    "sarda_orientalis": "Striped Bonito",
+    "sardinella_albella": "Albella Sardine",
+    "sardinella_gibbosa": "Gibbosa Sardine",
+    "sardinops_sagax": "Pacific Sardine",
+    "scaevius_milii": "Milii Leatherjacket",
+    "scolopsis_affinis": "Affinis Monocle Bream",
+    "scolopsis_bilineata": "Two-lined Monocle Bream",
+    "scolopsis_lineata": "Lineata Monocle Bream",
+    "scolopsis_margaritifer": "Margaritifer Monocle Bream",
+    "scolopsis_monogramma": "Monogramma Monocle Bream",
+    "scolopsis_trilineata": "Trilineata Monocle Bream",
+    "scolopsis_trilineata_4": "Trilineata 4 Monocle Bream",
+    "scolopsis_vosmeri": "Vosmeri Monocle Bream",
+    "scolopsis_xenochrous": "Xenochrous Monocle Bream",
+    "scomberoides_commersonnianus": "Commersonnianus Queenfish",
+    "scomberoides_lysan": "Lysan Queenfish",
+    "scomberomorus_commerson": "Spanish Mackerel",
+    "selar_crumenophthalmus": "Crumenophthalmus Bigeye Scad",
+    "selaroides_leptolepis": "Leptolepis Yellowstripe Scad",
+    "seriola_dumerili": "Greater Amberjack",
+    "seriola_hippos": "Hippos Amberjack",
+    "seriola_rivoliana": "Rivoliana Amberjack",
+    "seriolina_nigrofasciata": "Nigrofasciata Yellowtail Amberjack",
+    "serranocirrhitus_latus": "Latus Hawkfish Anthias",
+    "sillago_ciliata": "Ciliata Whiting",
+    "sillago_sihama": "Sihama Whiting",
+    "soleichthys_heterorhinos": "Heterorhinos Sole",
+    "sphyraena_barracuda": "Great Barracuda",
+    "sphyraena_forsteri": "Bigeye Barracuda",
+    "sphyraena_jello": "Pickhandle Barracuda",
+    "sphyraena_obtusata": "Obtuse Barracuda",
+    "stegostoma_fasciatum": "Zebra Shark",
+    "stethojulis_bandanensis": "Bandanensis Wrasse",
+    "stethojulis_interrupta": "Interrupta Wrasse",
+    "stethojulis_strigiventer": "Strigiventer Wrasse",
+    "stethojulis_trilineata": "Trilineata Wrasse",
+    "stolephorus_waitei": "Waitei Anchovy",
+    "suezichthys_arquatus": "Arquatus Wrasse",
+    "suezichthys_cyanolaemus": "Cyanolaemus Wrasse",
+    "suezichthys_gracilis": "Gracilis Wrasse",
+    "symphorichthys_spilurus": "Sailfin Snapper",
+    "symphorus_nematophorus": "Nematophorus Snapper",
+    "thalassohalichoeres_marginatusma_hardwicke": "Marginatusma Hardwicke Wrasse",
+    "thalassoma_amblycephalum": "Twotone Wrasse",
+    "thalassoma_hardwicke": "Sixbar Wrasse",
+    "thalassoma_jansenii": "Jansen's Wrasse",
+    "thalassoma_lunare": "Moon Wrasse",
+    "thalassoma_lutescens": "Yellow-brown Wrasse",
+    "thalassoma_nigrofasciatum": "Blackbarred Wrasse",
+    "thalassoma_purpureum": "Surge Wrasse",
+    "thalassoma_quinquevittatum": "Fivestripe Wrasse",
+    "thalassoma_trilobatum": "Christmas Wrasse",
+    "thryssa_baelama": "Baelama Anchovy",
+    "thryssa_hamiltonii": "Hamiltonii Anchovy",
+    "thunnus_alalunga": "Albacore Tuna",
+    "thunnus_albacares": "Yellowfin Tuna",
+    "thysanophrys_celebica": "Celebica Flathead",
+    "thysanophrys_chiltonae": "Chiltonae Flathead",
+    "trachichthys_australis": "Australis Roughy",
+    "trachinotus_baillonii": "Small-spotted Dart",
+    "trachinotus_blochii": "Snubnose Pompano",
+    "trachinotus_botla": "Botla Dart",
+    "trachypoma_macracanthus": "Macracanthus Grouper",
+    "triaenodon_obesus": "Whitetip Reef Shark",
+    "uraspis_secunda": "Secunda Trevally",
+    "valamugil_cunnesius": "Cunnesius Mullet",
+    "valamugil_engeli": "Engeli Mullet",
+    "valamugil_seheli": "Seheli Mullet",
+    "variola_albimarginata": "White-edged Lyretail",
+    "variola_louti": "Yellow-edged Lyretail",
+    "wattsia_mossambica": "Mossambica Western Butterfish",
+    "wetmorella_albofasciata": "Albofasciata Possum Wrasse",
+    "wetmorella_nigropinnata": "Nigropinnata Possum Wrasse",
+    "xiphocheilus_typus": "Typus Tuskfish",
+    "zenarchopterus_dispar": "Dispar Halfbeak",
+    "zeus_faber": "John Dory",
 }
 
 
@@ -400,53 +899,170 @@ def common_name(model_name: str) -> str:
     return COMMON_NAMES.get(model_name, model_name)
 
 
+def _iou(a: list, b: list) -> float:
+    x1 = max(a[0], b[0])
+    y1 = max(a[1], b[1])
+    x2 = min(a[2], b[2])
+    y2 = min(a[3], b[3])
+    inter = max(0, x2 - x1) * max(0, y2 - y1)
+    area_a = (a[2] - a[0]) * (a[3] - a[1])
+    area_b = (b[2] - b[0]) * (b[3] - b[1])
+    union = area_a + area_b - inter
+    return inter / union if union > 0 else 0.0
+
+
+def _dedup_cross_model(detections: list[dict], iou_thresh: float = 0.45) -> list[dict]:
+    """Remove duplicate detections of the same fish by different models on the same frame."""
+    by_frame: dict[int, list[dict]] = defaultdict(list)
+    for d in detections:
+        by_frame[d["frame_index"]].append(d)
+
+    keep = set(range(len(detections)))
+    idx_map: dict[int, int] = {}
+    pos = 0
+    for frame_dets in by_frame.values():
+        for d in frame_dets:
+            idx_map[id(d)] = pos
+            pos += 1
+
+    idx_map = {}
+    for i, d in enumerate(detections):
+        idx_map[id(d)] = i
+
+    for frame_dets in by_frame.values():
+        for a, b in combinations(frame_dets, 2):
+            ia, ib = idx_map[id(a)], idx_map[id(b)]
+            if ia not in keep or ib not in keep:
+                continue
+            bbox_a = a.get("bbox")
+            bbox_b = b.get("bbox")
+            if bbox_a is None or bbox_b is None:
+                continue
+            if _iou(bbox_a, bbox_b) >= iou_thresh:
+                loser = ib if a["confidence"] >= b["confidence"] else ia
+                keep.discard(loser)
+
+    return [detections[i] for i in sorted(keep)]
+
+
 def _merge_fragmented_tracks(
     tracks: dict[str, list[dict]], gap_threshold_sec: float = 15.0
 ) -> dict[str, list[dict]]:
-    """Merge tracks of the same species that are sequential and close in time.
+    """Merge tracks of the same species that never co-occur on the same frame.
 
-    The tracker loses a fish when the camera pans away or the fish briefly
-    leaves frame, then assigns a new track ID when it reappears.  If two
-    tracks share the same majority species, don't overlap in time, and the
-    gap between them is <= gap_threshold_sec, they're almost certainly the
-    same animal — merge them under one track ID.  Tracks that overlap in
-    time are genuinely different animals and are left alone.
+    The tracker frequently re-assigns IDs to the same fish — it may switch
+    from track 5 to track 10 mid-swim, then back to 5. Checking time-range
+    overlap misses this because the ranges interleave. Instead we check
+    actual frame-level co-occurrence: two tracks that share the same species
+    and never appear on the same frame are the same animal.
     """
     species_groups: dict[str, list[tuple[str, list[dict]]]] = defaultdict(list)
     for track_id, dets in tracks.items():
         species = Counter(d["species"] for d in dets).most_common(1)[0][0]
-        species_groups[species].append((track_id, dets))
+        name = common_name(species)
+        species_groups[name].append((track_id, dets))
 
     merged: dict[str, list[dict]] = {}
     for _species, track_list in species_groups.items():
         track_list.sort(key=lambda t: min(d["timestamp_sec"] for d in t[1]))
 
-        cur_id, cur_dets = track_list[0]
-        cur_end = max(d["timestamp_sec"] for d in cur_dets)
+        clusters: list[tuple[str, list[dict], set[int]]] = []
+        for track_id, dets in track_list:
+            frames = {d["frame_index"] for d in dets}
+            placed = False
+            for ci, (cid, cdets, cframes) in enumerate(clusters):
+                if not frames & cframes:
+                    last_cur = max(d["timestamp_sec"] for d in cdets)
+                    first_new = min(d["timestamp_sec"] for d in dets)
+                    last_new = max(d["timestamp_sec"] for d in dets)
+                    gap = max(0, first_new - last_cur)
+                    if gap <= gap_threshold_sec:
+                        clusters[ci] = (cid, cdets + dets, cframes | frames)
+                        placed = True
+                        break
+            if not placed:
+                clusters.append((track_id, dets, frames))
 
-        for track_id, dets in track_list[1:]:
-            t_start = min(d["timestamp_sec"] for d in dets)
-            t_end = max(d["timestamp_sec"] for d in dets)
-
-            if t_start > cur_end and (t_start - cur_end) <= gap_threshold_sec:
-                cur_dets = cur_dets + dets
-                cur_end = max(cur_end, t_end)
-            else:
-                merged[cur_id] = cur_dets
-                cur_id, cur_dets = track_id, dets
-                cur_end = t_end
-
-        merged[cur_id] = cur_dets
+        for cid, cdets, _ in clusters:
+            merged[cid] = cdets
 
     return merged
 
 
+def _dedup_tracks_spatially(
+    tracks: dict[str, list[dict]], iou_thresh: float = 0.3
+) -> dict[str, list[dict]]:
+    """Merge tracks whose bounding boxes overlap across frames.
+
+    Both models often detect the same physical fish but assign different
+    species labels (e.g. FishInv calls an Emperor Angelfish "serranidae"
+    while Seychelles correctly identifies it).  Per-frame IoU dedup catches
+    same-frame overlaps, but the models don't always fire on the same
+    frames.  This pass checks bbox overlap on shared *and nearby* frames
+    (±2) and merges tracks that clearly follow the same animal.
+    """
+    track_ids = list(tracks.keys())
+    if len(track_ids) <= 1:
+        return tracks
+
+    frame_map = {tid: {d["frame_index"]: d for d in dets} for tid, dets in tracks.items()}
+
+    parent = {tid: tid for tid in track_ids}
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            if len(tracks[ra]) < len(tracks[rb]):
+                ra, rb = rb, ra
+            parent[rb] = ra
+
+    for i in range(len(track_ids)):
+        for j in range(i + 1, len(track_ids)):
+            tid_a, tid_b = track_ids[i], track_ids[j]
+            fa, fb = frame_map[tid_a], frame_map[tid_b]
+
+            overlaps = 0
+            comparisons = 0
+            for fidx, det_a in fa.items():
+                bbox_a = det_a.get("bbox")
+                if not bbox_a:
+                    continue
+                for offset in range(-2, 3):
+                    neighbor = fidx + offset
+                    if neighbor in fb:
+                        bbox_b = fb[neighbor].get("bbox")
+                        if bbox_b:
+                            comparisons += 1
+                            if _iou(bbox_a, bbox_b) >= iou_thresh:
+                                overlaps += 1
+
+            if comparisons >= 2 and overlaps / comparisons >= 0.5:
+                union(tid_a, tid_b)
+
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for tid in track_ids:
+        groups[find(tid)].extend(tracks[tid])
+    return dict(groups)
+
+
+MIN_ACCEPTED_DETECTIONS = 3
+
+
 def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict:
+    detections = _dedup_cross_model(detections)
+
     raw_tracks: dict[str, list[dict]] = defaultdict(list)
     for detection in detections:
         raw_tracks[detection["track_id"]].append(detection)
 
-    tracks = _merge_fragmented_tracks(raw_tracks)
+    tracks = _dedup_tracks_spatially(raw_tracks)
+    tracks = _merge_fragmented_tracks(tracks)
 
     species_counts: Counter = Counter()
     species_conf_sum: dict[str, float] = defaultdict(float)
@@ -457,7 +1073,7 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
         accept_conf = track_detections[0]["accept_conf"]
         accepted = [d for d in track_detections if d["confidence"] >= accept_conf]
 
-        if accepted:
+        if len(accepted) >= MIN_ACCEPTED_DETECTIONS:
             species = Counter(d["species"] for d in accepted).most_common(1)[0][0]
             avg_conf = sum(d["confidence"] for d in accepted) / len(accepted)
             species_counts[species] += 1

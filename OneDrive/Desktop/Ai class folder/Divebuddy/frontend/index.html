@@ -110,6 +110,69 @@
     border-radius: 4px;
     vertical-align: middle;
   }
+
+  .chat-section {
+    margin-top: 28px;
+    border-top: 1px solid rgba(0,229,196,0.15);
+    padding-top: 20px;
+  }
+  .chat-messages {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 4px 0;
+  }
+  .chat-msg {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 85%;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+  .chat-msg.user {
+    background: rgba(0,229,196,0.15);
+    border: 1px solid rgba(0,229,196,0.25);
+    align-self: flex-end;
+    color: #e8f4f8;
+  }
+  .chat-msg.assistant {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    align-self: flex-start;
+    color: #c8dce8;
+  }
+  .chat-msg.assistant .typing {
+    display: inline-block;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,229,196,0.25);
+    background: rgba(255,255,255,0.05);
+    color: #e8f4f8;
+    font-size: 13px;
+    outline: none;
+  }
+  .chat-input-row input::placeholder { color: #5a7a8a; }
+  .chat-input-row input:focus { border-color: #00e5c4; }
+  .chat-input-row button {
+    width: auto;
+    padding: 10px 20px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
@@ -150,6 +213,15 @@
       <div class="downloads">
         <a id="csvLink" href="#" target="_blank">⬇ Download CSV</a>
         <a id="pdfLink" href="#" target="_blank">⬇ Download PDF</a>
+      </div>
+
+      <div class="chat-section">
+        <h2>Ask DiveBuddy AI</h2>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Ask about your results or give feedback..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button onclick="sendChat()">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -271,6 +343,52 @@
       document.getElementById('csvLink').href = `${API_BASE}/jobs/${jobId}/report.csv`;
       document.getElementById('pdfLink').href = `${API_BASE}/jobs/${jobId}/report.pdf`;
       document.getElementById('resultsSection').style.display = 'block';
+      chatHistory = [];
+      document.getElementById('chatMessages').innerHTML = '';
+    }
+
+    let chatHistory = [];
+
+    function appendChatMsg(role, text) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-msg ' + role;
+      div.textContent = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg || !currentJobId) return;
+
+      input.value = '';
+      appendChatMsg('user', msg);
+
+      const typingDiv = appendChatMsg('assistant', '');
+      typingDiv.innerHTML = '<span class="typing">Thinking...</span>';
+
+      try {
+        const res = await fetch(`${API_BASE}/jobs/${currentJobId}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, history: chatHistory }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          typingDiv.textContent = 'Error: ' + (data.detail || 'Something went wrong');
+          return;
+        }
+
+        typingDiv.textContent = data.reply;
+        chatHistory.push({ role: 'user', content: msg });
+        chatHistory.push({ role: 'assistant', content: data.reply });
+      } catch (err) {
+        typingDiv.textContent = 'Could not reach the AI service.';
+      }
     }
   </script>
 </body>

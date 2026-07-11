@@ -1,14 +1,17 @@
 import datetime
 import json
+import os
 import pathlib
 import shutil
 import traceback
 import uuid
 
+import anthropic
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from app.pipeline.aggregate import aggregate_tracks, common_name
 from app.pipeline.detect import run_detection
@@ -182,3 +185,89 @@ def get_job_pdf(job_id: str):
     if job["status"] != "done":
         raise HTTPException(status_code=409, detail=f"Job is {job['status']}, not ready yet")
     return FileResponse(OUTPUT_DIR / job_id / "report.pdf", filename=f"divebuddy_report_{job_id}.pdf")
+
+
+# ---------------------------------------------------------------------------
+# AI Chatbot
+# ---------------------------------------------------------------------------
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
+
+
+def _build_results_context(job: dict) -> str:
+    result = job["result"]
+    lines = [f"Video: {job['video_name']}"]
+    lines.append("")
+    if result["species_summary"]:
+        lines.append("Species detected (auto-confirmed):")
+        for s in result["species_summary"]:
+            lines.append(
+                f"  - {s['species']}: {s['unique_count']} unique, "
+                f"avg confidence {s['avg_confidence']:.1%}, rarity={s['rarity']}"
+            )
+    else:
+        lines.append("No species were detected above the confidence threshold.")
+
+    if result["review_queue"]:
+        lines.append("")
+        lines.append("Flagged for review (below 80% confidence):")
+        for r in result["review_queue"]:
+            lines.append(
+                f"  - {r['species_guess']}: {r['max_confidence']:.1%} confidence "
+                f"at {r['timestamp_sec']}s"
+            )
+    return "\n".join(lines)
+
+
+CHAT_SYSTEM_PROMPT = """\
+You are DiveBuddy's AI assistant. You help divers understand their dive video analysis results.
+
+You have access to the analysis results for the user's dive video below. Use this to answer questions about what was found, explain species, discuss rarity, and help interpret the results.
+
+If the user gives feedback about the results (e.g. "that's not a grouper" or "I actually saw two parrotfish"), acknowledge it helpfully. You can explain how the detection pipeline works (YOLO models, confidence thresholds, tracker-based deduplication) if asked.
+
+Keep responses concise and friendly. Use the diver's perspective — they care about what they saw on their dive.
+
+--- ANALYSIS RESULTS ---
+{results}
+"""
+
+
+@app.post("/jobs/{job_id}/chat")
+async def chat(job_id: str, req: ChatRequest):
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="ANTHROPIC_API_KEY not set. Set the environment variable and restart the server.",
+        )
+
+    job = get_job_or_404(job_id)
+    if job["status"] != "done":
+        raise HTTPException(status_code=409, detail=f"Job is {job['status']}, not ready yet")
+
+    system = CHAT_SYSTEM_PROMPT.format(results=_build_results_context(job))
+    messages = [{"role": m.role, "content": m.content} for m in req.history]
+    messages.append({"role": "user", "content": req.message})
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            system=system,
+            messages=messages,
+        )
+        reply = response.content[0].text
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=401, detail="Invalid ANTHROPIC_API_KEY")
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"AI service error: {exc}")
+
+    return {"reply": reply}

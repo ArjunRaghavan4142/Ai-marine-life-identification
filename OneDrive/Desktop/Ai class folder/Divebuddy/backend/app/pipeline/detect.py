@@ -1,31 +1,13 @@
 """Marine organism detection + tracking.
 
-Runs each extracted frame through both marine-detect YOLOv8 checkpoints
-(FishInv: fish/invertebrates, MegaFauna: sharks/rays/turtles) using
-ultralytics' built-in TrackTrack tracker instead of plain detection, so that
-the same animal seen across consecutive frames keeps one track ID. That's
-what makes duplicate-count reduction possible downstream.
+Runs each extracted frame through the YOLO model pipeline using
+ultralytics' built-in BoT-SORT tracker so that the same animal seen
+across consecutive frames keeps one track ID — duplicate-count
+reduction downstream depends on this.
 
-Uses TrackTrack (tracker_type: tracktrack), not the more commonly-used
-ByteTrack, because real handheld dive footage pans and shakes constantly.
-ByteTrack has no camera-motion compensation, so on a real dive clip the
-same stationary fish appeared to "move" every frame just from camera pan,
-which fragmented single fish into dozens of spurious tracks (confirmed:
-one 20s clip went from 14 to 69 "unique" fish just from denser sampling
-with ByteTrack, because it made the fragmentation worse, not better).
-TrackTrack has built-in global motion compensation (gmc_method) plus
-explicit duplicate-ID suppression, which is exactly the failure mode this
-hit -- and coincidentally, this is also literally what the original
-DiveBuddy doc named ("TrackTrack from yolo"), which turned out to be a
-real tracker after all, not a mistranscription of ByteTrack.
-
-Uses a custom tracker config (tracktrack_divebuddy.yaml) rather than the
-stock tracktrack.yaml: stock sets new_track_thresh=0.7, which silently
-drops any detection between our review_conf floor and 0.7 that doesn't
-match an existing track, instead of letting it surface in the low-
-confidence review queue. The custom config lowers that to match
-review_conf so nothing vanishes between the detector and our own
-aggregation logic.
+BoT-SORT with gmc_method=sparseOptFlow compensates for camera motion,
+which is critical for handheld dive footage where the camera pans
+constantly.
 """
 import pathlib
 
@@ -34,7 +16,7 @@ import torch
 from ultralytics import YOLO
 
 MODELS_DIR = pathlib.Path(__file__).resolve().parent.parent / "models"
-TRACKER_CONFIG = pathlib.Path(__file__).resolve().parent / "tracktrack_divebuddy.yaml"
+TRACKER_CONFIG = pathlib.Path(__file__).resolve().parent / "botsort_divebuddy.yaml"
 
 # CPU inference of two YOLO models + TrackTrack's optical-flow motion
 # compensation is what made a 20s clip take ~5 minutes (documented in
@@ -50,9 +32,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # of just vanishing.
 MODEL_CONFIGS = [
     {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.80, "review_conf": 0.30},
-    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.80, "review_conf": 0.30},
-    # Seychelles disabled until training completes (epoch 40/80 produces too many false positives)
-    # {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30},
+    {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30},
+    {"name": "ReefFamilies", "weights": "ReefFamilies.pt", "accept_conf": 0.80, "review_conf": 0.30},
 ]
 
 
@@ -110,6 +91,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
                     "frame_index": frame["frame_index"],
                     "timestamp_sec": frame["timestamp_sec"],
                     "crop_path": str(crop_path) if crop.size > 0 else None,
+                    "bbox": [x1, y1, x2, y2],
                 })
 
         del model

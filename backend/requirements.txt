@@ -1,0 +1,11 @@
+# NOTE: this pulls in the CPU-only build of torch as a dependency of
+# ultralytics. If you have an NVIDIA GPU, follow the extra step in the
+# top-level README to swap it for the CUDA build -- detection is
+# roughly 5x faster on GPU (measured: ~5min -> ~1min for a 20s clip).
+fastapi
+uvicorn[standard]
+python-multipart
+ultralytics
+opencv-python
+pandas
+reportlab

@@ -1,0 +1,2956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DiveBuddy</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a1628;--mid:#0d2240;--surface:#0e3a5c;
+  --teal:#00e5c4;--teal-dim:rgba(0,229,196,0.12);--teal-border:rgba(0,229,196,0.22);
+  --coral:#ff6b4a;--coral-dim:rgba(255,107,74,0.13);
+  --gold:#f5c842;--gold-dim:rgba(245,200,66,0.13);
+  --text:#e8f4f8;--muted:#8ab4c8;
+  --card:rgba(13,34,64,0.88);--border:rgba(0,229,196,0.18);
+}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
+.phone{width:390px;min-height:844px;background:var(--bg);border-radius:44px;
+  border:2px solid rgba(0,229,196,0.25);
+  box-shadow:0 0 80px rgba(0,229,196,0.12),0 40px 80px rgba(0,0,0,0.6);
+  overflow:hidden;position:relative;display:flex;flex-direction:column;}
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden;animation:fadeIn .22s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.status-bar{display:flex;justify-content:space-between;align-items:center;
+  padding:14px 28px 6px;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);flex-shrink:0;}
+.scroll-area{flex:1;overflow-y:auto;padding-bottom:90px;scrollbar-width:none;}
+.scroll-area::-webkit-scrollbar{display:none;}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(10,22,40,0.97);
+  backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;
+  justify-content:space-around;padding:10px 0 22px;z-index:100;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;
+  border:none;cursor:pointer;color:var(--muted);font-family:'Space Grotesk',sans-serif;
+  font-size:10px;padding:4px 10px;border-radius:10px;transition:all .2s;}
+.nav-btn.active{color:var(--teal);}
+.nav-btn svg{width:22px;height:22px;}
+.page-header{padding:20px 24px 10px;flex-shrink:0;}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px;}
+.page-subtitle{font-size:13px;color:var(--muted);margin-top:2px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin:0 16px 12px;}
+.tag{display:inline-block;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;}
+.tag-teal{background:var(--teal-dim);color:var(--teal);}
+.tag-coral{background:var(--coral-dim);color:var(--coral);}
+.tag-gold{background:var(--gold-dim);color:var(--gold);}
+.btn-p{background:var(--teal);color:var(--bg);border:none;border-radius:14px;padding:14px 24px;
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;
+  width:100%;transition:all .2s;letter-spacing:.2px;}
+.btn-p:hover{background:#00ffdc;transform:scale(1.01);}
+.btn-p:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn-s{background:var(--teal-dim);color:var(--teal);border:1px solid var(--border);
+  border-radius:14px;padding:13px 24px;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;}
+.btn-s:hover{background:rgba(0,229,196,0.18);}
+.inp{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:13px 16px;color:var(--text);font-family:'Space Grotesk',sans-serif;
+  font-size:14px;width:100%;outline:none;margin-bottom:12px;}
+.inp:focus{border-color:var(--teal);}
+.inp::placeholder{color:var(--muted);}
+.inp-label{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+.divider{height:1px;background:var(--border);margin:8px 0;}
+.back-link{color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+.section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:4px 24px 8px;}
+.alert{border-radius:12px;padding:11px 14px;font-size:13px;margin:0 0 10px;}
+.alert-ok{background:rgba(0,229,196,0.08);border:1px solid rgba(0,229,196,0.25);color:var(--teal);}
+.alert-err{background:var(--coral-dim);border:1px solid rgba(255,107,74,0.3);color:var(--coral);}
+
+/* ======= SPLASH ======= */
+#screen-splash{background:radial-gradient(ellipse at 30% 70%,rgba(0,229,196,0.16) 0%,transparent 60%),var(--bg);justify-content:center;align-items:center;}
+.splash-logo{width:80px;height:80px;background:var(--teal);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;box-shadow:0 0 40px rgba(0,229,196,0.5);}
+.splash-title{font-size:42px;font-weight:700;letter-spacing:-2px;line-height:1;text-align:center;}
+.splash-title span{color:var(--teal);}
+.splash-sub{color:var(--muted);margin:12px 0 48px;font-size:15px;line-height:1.5;text-align:center;}
+.splash-btns{display:flex;flex-direction:column;gap:10px;}
+
+/* ======= SIGNUP / LOGIN ======= */
+.type-row{display:flex;gap:8px;margin:0 24px 20px;}
+.type-btn{flex:1;padding:12px;border-radius:14px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);color:var(--muted);font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+.type-btn.sel{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);}
+.cb-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:20px;}
+.cb{width:20px;height:20px;border:1px solid var(--border);border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;}
+.cb.chk{background:var(--teal);border-color:var(--teal);color:var(--bg);font-size:12px;}
+.cb-lbl{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* ======= HOME ======= */
+.hero-card{margin:0 16px 14px;background:linear-gradient(135deg,var(--surface) 0%,var(--mid) 100%);
+  border-radius:22px;padding:22px;border:1px solid rgba(0,229,196,0.2);position:relative;overflow:hidden;}
+.hero-card::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,196,0.15),transparent 70%);top:-50px;right:-30px;}
+.hero-stats{display:flex;gap:18px;margin-top:16px;}
+.stat-val{font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;}
+.stat-lbl{font-size:11px;color:var(--muted);}
+.new-dive-btn{margin:0 16px 14px;background:var(--teal);color:var(--bg);border:none;border-radius:18px;
+  padding:18px 22px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;transition:all .2s;width:calc(100% - 32px);}
+.new-dive-btn:hover{transform:scale(1.01);box-shadow:0 8px 30px rgba(0,229,196,0.3);}
+.dive-card{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
+  margin:0 16px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;cursor:pointer;transition:border-color .2s;}
+.dive-card:hover{border-color:rgba(0,229,196,0.4);}
+
+/* ======= DIVE LOG ======= */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
+.toggle{width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;
+  cursor:pointer;position:relative;transition:background .2s;border:none;}
+.toggle.on{background:var(--teal);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:white;
+  border-radius:50%;top:3px;left:3px;transition:left .2s;}
+.toggle.on::after{left:23px;}
+
+/* ======= VIDEO UPLOAD ======= */
+.upload-zone{border:2px dashed var(--border);border-radius:18px;padding:36px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;margin:0 16px 12px;
+  background:rgba(0,229,196,0.02);}
+.upload-zone:hover{border-color:var(--teal);background:rgba(0,229,196,0.06);}
+.upload-zone.has-file{border-color:rgba(0,229,196,0.5);background:rgba(0,229,196,0.07);}
+.prog-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;margin:12px 0;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--teal-dim),var(--teal));border-radius:3px;width:0%;transition:width .35s;}
+
+/* ======= SPECIES REPORT ======= */
+.sp-table{margin:0 16px;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.sp-header{display:grid;grid-template-columns:1fr 60px 70px;background:rgba(0,229,196,0.08);
+  padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;}
+.sp-row{display:grid;grid-template-columns:1fr 60px 70px;padding:12px 14px;
+  border-top:1px solid var(--border);align-items:center;font-size:13px;background:var(--card);}
+.sp-row.flagged{background:rgba(255,107,74,0.05);}
+.sp-emoji{font-size:15px;margin-right:6px;}
+.sp-name{font-weight:600;font-size:13px;}
+.sp-sci{font-size:10px;color:var(--muted);font-style:italic;}
+.sp-pts{font-family:'Space Mono',monospace;font-size:13px;color:var(--teal);font-weight:700;}
+.unid-box{background:rgba(255,107,74,0.07);border:1px solid rgba(255,107,74,0.2);
+  border-radius:12px;padding:10px 14px;margin:10px 16px 0;display:flex;justify-content:space-between;align-items:center;}
+
+/* ======= FISH DEX ======= */
+.dex-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
+.dex-card{border-radius:16px;padding:14px;cursor:pointer;border:1px solid var(--border);transition:all .2s;position:relative;}
+.dex-card.seen{border-color:rgba(0,229,196,0.3);background:rgba(0,229,196,0.06);}
+.dex-card.unseen{border-color:rgba(255,107,74,0.2);background:rgba(255,107,74,0.04);}
+.dex-card.rare{border-color:rgba(245,200,66,0.3);background:rgba(245,200,66,0.05);}
+.dex-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;}
+.dex-dot.seen{background:var(--teal);}
+.dex-dot.unseen{background:var(--coral);}
+.dex-dot.rare{background:var(--gold);}
+
+/* ======= LEADERBOARD ======= */
+.lb-tabs{display:flex;gap:6px;padding:0 16px 12px;}
+.lb-tab{flex:1;padding:9px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);color:var(--muted);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:'Space Grotesk',sans-serif;}
+.lb-tab.active{background:var(--teal-dim);color:var(--teal);border-color:var(--teal-border);}
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+  margin:0 16px 6px;background:var(--card);border:1px solid var(--border);}
+.lb-row.me{border-color:rgba(0,229,196,0.4);background:rgba(0,229,196,0.07);}
+.lb-rank{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;width:22px;text-align:center;}
+.lb-avatar{width:36px;height:36px;border-radius:12px;background:var(--surface);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.lb-pts{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--teal);}
+
+/* ======= ACHIEVEMENTS ======= */
+.ach-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px;}
+.ach-card{border-radius:14px;padding:12px 8px;text-align:center;border:1px solid var(--border);background:var(--card);}
+.ach-card.unlocked{border-color:rgba(0,229,196,0.3);background:rgba(0,229,196,0.06);}
+.ach-card.locked{opacity:.4;filter:grayscale(.6);}
+.ach-icon{font-size:26px;display:block;margin-bottom:5px;}
+.ach-name{font-size:10px;font-weight:600;line-height:1.3;}
+.ach-crit{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* ======= PROFILE / PREV DIVES ======= */
+.pdive-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
+  margin:0 16px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;cursor:pointer;transition:border-color .2s;}
+.pdive-row:hover{border-color:rgba(0,229,196,0.4);}
+
+/* ======= RESEARCHER ANALYSIS ======= */
+.analysis-card{background:var(--card);border:1px solid rgba(245,200,66,0.2);border-radius:16px;padding:16px;margin:0 16px 12px;}
+.analysis-title{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px;}
+.hl{color:var(--text);font-weight:600;}
+
+/* ======= INTRO STEPS ======= */
+.intro-step{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 16px 12px;display:flex;gap:14px;align-items:flex-start;}
+.intro-num{width:32px;height:32px;background:var(--teal-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--teal);font-weight:700;font-size:15px;flex-shrink:0;}
+
+/* ======= MISC ======= */
+.researcher-badge{background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.25);border-radius:14px;padding:12px 14px;margin:0 16px 12px;display:flex;gap:10px;align-items:flex-start;}
+.friends-extra{margin:8px 16px 0;background:rgba(0,229,196,0.05);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(5,12,25,0.85);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:#0d2240;border-radius:24px 24px 0 0;border:1px solid var(--border);padding:24px;width:100%;max-height:80%;overflow-y:auto;}
+.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+
+<!-- STATUS BAR -->
+<div class="status-bar" id="status-bar" style="display:none;">
+  <span id="sb-time">9:41</span>
+  <span style="color:var(--teal);font-weight:700;font-size:13px;">DiveBuddy</span>
+  <span>●●●</span>
+</div>
+
+<!-- ===== SPLASH ===== -->
+<div class="screen active" id="screen-splash" style="justify-content:center;align-items:center;background:radial-gradient(ellipse at 30% 70%,rgba(0,229,196,0.16) 0%,transparent 60%),var(--bg);">
+  <div style="text-align:center;padding:40px 32px;">
+    <div class="splash-logo">🤿</div>
+    <div class="splash-title">Dive<span>Buddy</span></div>
+    <p class="splash-sub">AI-powered marine species identification<br>for every dive</p>
+    <div class="splash-btns">
+      <button class="btn-p" onclick="go('signup')">Create account</button>
+      <button class="btn-s" onclick="showLogin()">Log in</button>
+    </div>
+  </div>
+  <div style="text-align:center;padding-bottom:30px;font-size:11px;color:var(--muted);">For divers. For science.</div>
+</div>
+
+<!-- ===== LOGIN ===== -->
+<div class="screen" id="screen-login">
+  <div class="page-header">
+    <div class="back-link" onclick="go('splash')">← Back</div>
+    <div class="page-title">Welcome back</div>
+    <div class="page-subtitle">Sign in to your account</div>
+  </div>
+  <div class="scroll-area" style="padding:0 24px;">
+    <div style="height:20px;"></div>
+    <div class="inp-label">Username</div>
+    <input class="inp" id="login-user" placeholder="Your username">
+    <div class="inp-label">Password</div>
+    <input class="inp" id="login-pass" type="password" placeholder="Your password">
+    <div id="login-err" style="display:none;" class="alert alert-err"></div>
+    <div style="height:8px;"></div>
+    <button class="btn-p" onclick="doLogin()">Log in</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted);">
+      No account? <span style="color:var(--teal);cursor:pointer;" onclick="go('signup')">Sign up</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SIGNUP ===== -->
+<div class="screen" id="screen-signup">
+  <div class="page-header">
+    <div class="back-link" onclick="go('splash')">← Back</div>
+    <div class="page-title">Join DiveBuddy</div>
+    <div class="page-subtitle">Choose your account type</div>
+  </div>
+  <div class="scroll-area">
+    <div class="type-row">
+      <button class="type-btn sel" id="su-casual" onclick="suType('casual')">🤿 Casual Diver</button>
+      <button class="type-btn" id="su-researcher" onclick="suType('researcher')">🔬 Researcher</button>
+    </div>
+    <div style="padding:0 24px;">
+      <div class="inp-label">Username</div>
+      <input class="inp" id="su-user" placeholder="e.g. ocean_explorer_99">
+      <div class="inp-label">Password</div>
+      <input class="inp" id="su-pass" type="password" placeholder="Choose a strong password">
+      <div class="inp-label">Email</div>
+      <input class="inp" id="su-email" placeholder="your@email.com">
+      <div id="su-researcher-fields" style="display:none;">
+        <div class="inp-label">Research Organisation</div>
+        <input class="inp" id="su-org" placeholder="e.g. CSIRO Marine Division">
+        <div class="inp-label">Researcher ID (photo upload simulated)</div>
+        <div class="card" style="margin:0 0 12px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+          <span style="font-size:24px;">📎</span>
+          <div><div style="font-size:13px;font-weight:600;">Upload ID card</div><div style="font-size:11px;color:var(--muted);">Tap to attach researcher ID image</div></div>
+        </div>
+      </div>
+      <div class="cb-row" id="su-terms-row">
+        <div class="cb" id="su-cb" onclick="toggleCb('su-cb')"></div>
+        <div class="cb-lbl">I agree to allow my dive data to be shared anonymously with marine researchers to support ocean science.</div>
+      </div>
+      <div id="su-err" style="display:none;" class="alert alert-err"></div>
+      <button class="btn-p" onclick="doSignup()">Create account</button>
+      <div style="text-align:center;margin-top:14px 0 24px;font-size:13px;color:var(--muted);padding-bottom:20px;">
+        Already have an account? <span style="color:var(--teal);cursor:pointer;" onclick="showLogin()">Log in</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOW TO USE ===== -->
+<div class="screen" id="screen-intro">
+  <div class="page-header">
+    <div class="page-title">How it works</div>
+    <div class="page-subtitle">Getting started with DiveBuddy</div>
+  </div>
+  <div class="scroll-area">
+    <div class="intro-step">
+      <div class="intro-num">1</div>
+      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Record your dive</div>
+      <div style="font-size:13px;color:var(--muted);">Use an underwater camera or your phone in a waterproof case. Mount it to capture wide footage of the reef.</div></div>
+    </div>
+    <div class="intro-step">
+      <div class="intro-num">2</div>
+      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Upload after surfacing</div>
+      <div style="font-size:13px;color:var(--muted);">Open DiveBuddy, start a new dive log, and upload your video. Our AI scans it frame by frame.</div></div>
+    </div>
+    <div class="intro-step">
+      <div class="intro-num">3</div>
+      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Get your species report</div>
+      <div style="font-size:13px;color:var(--muted);">See every species spotted, abundance, rarity, and your points. Unidentified species are flagged.</div></div>
+    </div>
+    <div class="intro-step">
+      <div class="intro-num">4</div>
+      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Climb the leaderboard</div>
+      <div style="font-size:13px;color:var(--muted);">Rare species earn more points. Compete globally, by location, or just with friends.</div></div>
+    </div>
+    <div style="padding:4px 16px 16px;">
+      <button class="btn-p" onclick="go('home');updateHome();">Let's dive in 🤿</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOME ===== -->
+<div class="screen" id="screen-home">
+  <div class="scroll-area" style="padding-top:8px;">
+
+    <!-- Hero card -->
+    <div class="hero-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:13px;color:var(--muted);">Welcome back</div>
+          <div style="font-size:22px;font-weight:700;margin-top:2px;" id="home-username">Diver</div>
+        </div>
+        <div style="background:rgba(0,229,196,0.15);border-radius:12px;padding:8px 12px;text-align:center;cursor:pointer;" onclick="go('achievements');renderAchievements();">
+          <div style="font-size:18px;">🏆</div>
+          <div style="font-size:10px;color:var(--teal);font-weight:600;margin-top:2px;" id="home-ach-count">0 awards</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div style="cursor:pointer;" onclick="go('profile');renderProfile();">
+          <div class="stat-val" id="home-dives">0</div><div class="stat-lbl">Dives</div>
+        </div>
+        <div style="cursor:pointer;" onclick="go('profile');renderProfile();">
+          <div class="stat-val" id="home-pts">0</div><div class="stat-lbl">Points</div>
+        </div>
+        <div style="cursor:pointer;" onclick="go('fishdex')">
+          <div class="stat-val" id="home-species">0</div><div class="stat-lbl">Species</div>
+        </div>
+        <div style="cursor:pointer;" onclick="go('leaderboard')">
+          <div class="stat-val" id="home-rank">#—</div><div class="stat-lbl">Global</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log new dive CTA -->
+    <button class="new-dive-btn" onclick="go('divelog')">
+      <div>
+        <div style="font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.8px;">Ready to go?</div>
+        <div style="font-size:20px;font-weight:700;">Log New Dive</div>
+      </div>
+      <div style="font-size:32px;">🌊</div>
+    </button>
+
+    <!-- Quick access grid -->
+    <div class="section-label">QUICK ACCESS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 16px;">
+      <div class="card" style="margin:0;cursor:pointer;padding:14px;" onclick="go('fishdex')">
+        <div style="font-size:24px;margin-bottom:6px;">📖</div>
+        <div style="font-size:13px;font-weight:700;">Fish Dex</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Browse all species</div>
+      </div>
+      <div class="card" style="margin:0;cursor:pointer;padding:14px;" onclick="go('photodetect')">
+        <div style="font-size:24px;margin-bottom:6px;">📷</div>
+        <div style="font-size:13px;font-weight:700;">Photo ID</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Identify from a photo</div>
+      </div>
+      <div class="card" style="margin:0;cursor:pointer;padding:14px;" onclick="go('achievements');renderAchievements();">
+        <div style="font-size:24px;margin-bottom:6px;">🌟</div>
+        <div style="font-size:13px;font-weight:700;">Achievements</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="home-ach-sub">Unlock milestones</div>
+      </div>
+      <div class="card" style="margin:0;cursor:pointer;padding:14px;" onclick="goResearch()">
+        <div style="font-size:24px;margin-bottom:6px;">🔬</div>
+        <div style="font-size:13px;font-weight:700;">Reef Analysis</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Researcher reports</div>
+      </div>
+    </div>
+
+    <!-- Recent dives -->
+    <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>RECENT DIVES</span>
+      <span style="cursor:pointer;color:var(--teal);" onclick="renderMyDives();go('mydives')">View all →</span>
+    </div>
+    <div id="home-recent-dives">
+      <div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No dives yet. Log your first dive!</div>
+    </div>
+
+    <!-- Rare species nearby -->
+    <div class="section-label" style="margin-top:6px;">RARE SPECIES NEARBY</div>
+    <div class="card" style="display:flex;gap:12px;align-items:center;cursor:pointer;" onclick="go('fishdex')">
+      <span style="font-size:32px;">🦈</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;">Whale Shark spotted</div>
+        <div style="font-size:12px;color:var(--muted);">Cod Hole area · 2 sightings this week</div>
+        <span class="tag tag-teal" style="margin-top:6px;">500 pts if spotted</span>
+      </div>
+      <div style="color:var(--muted);">›</div>
+    </div>
+    <div class="card" style="display:flex;gap:12px;align-items:center;cursor:pointer;margin-top:0;" onclick="go('fishdex')">
+      <span style="font-size:32px;">🪁</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;">Manta Ray migration</div>
+        <div style="font-size:12px;color:var(--muted);">Osprey Reef · seasonal sightings active</div>
+        <span class="tag tag-gold" style="margin-top:6px;">160 pts per sighting</span>
+      </div>
+      <div style="color:var(--muted);">›</div>
+    </div>
+
+  </div>
+  <nav class="bottom-nav" id="nav-home">
+    <button class="nav-btn active" onclick="go('home');updateHome();">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn" onclick="go('fishdex')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn" onclick="go('leaderboard');renderLeaderboard();">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn" onclick="go('achievements');renderAchievements();">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Awards</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('profile');renderProfile();">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<!-- ===== DIVE LOG ===== -->
+<div class="screen" id="screen-divelog">
+  <div class="page-header">
+    <div class="back-link" onclick="go('home')">← Home</div>
+    <div class="page-title">Log a Dive</div>
+    <div class="page-subtitle">Fill in your dive details</div>
+  </div>
+  <div class="scroll-area">
+    <div style="padding:0 16px 12px;">
+      <!-- Dive computer import banner -->
+      <div style="background:linear-gradient(135deg,rgba(0,229,196,0.12),rgba(0,229,196,0.05));border:1px solid var(--teal-border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:24px;">🖥️</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Import from Dive Computer</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px;">Suunto, Garmin, Shearwater, OSTC</div>
+          </div>
+        </div>
+        <button class="btn-p" style="width:auto;padding:9px 16px;font-size:13px;" onclick="openDiveComputerModal()">Import</button>
+      </div>
+    </div>
+
+    <div style="padding:0 24px;">
+      <div class="inp-label">Dive Site Name</div>
+      <input class="inp" id="dl-site" placeholder="e.g. Cod Hole, Great Barrier Reef">
+      <div class="inp-label">Date & Time <span class="tag tag-teal" style="font-size:10px;">AUTO</span></div>
+      <input class="inp" id="dl-date" placeholder="Auto-filled">
+      <div class="inp-label">Location <span class="tag tag-teal" style="font-size:10px;">GPS</span></div>
+      <input class="inp" id="dl-location" placeholder="e.g. Queensland, Australia">
+      <div class="inp-label">Dive Partners</div>
+      <input class="inp" id="dl-partners" placeholder="Add dive buddy usernames...">
+      <div class="inp-label">Max Depth (m)</div>
+      <input class="inp" id="dl-depth" type="number" placeholder="e.g. 18">
+      <div class="inp-label">Dive Duration (min)</div>
+      <input class="inp" id="dl-duration" type="number" placeholder="e.g. 42">
+      <div class="inp-label">Water Temperature (°C)</div>
+      <input class="inp" id="dl-temp" type="number" placeholder="e.g. 24">
+      <div class="inp-label">Visibility (m)</div>
+      <input class="inp" id="dl-vis" type="number" placeholder="e.g. 18">
+      <div class="inp-label">Notes</div>
+      <textarea class="inp" id="dl-notes" placeholder="Conditions, observations, highlights..." style="min-height:80px;resize:none;"></textarea>
+      <div class="divider" style="margin:4px 0 14px;"></div>
+      <div class="toggle-row"><span style="font-size:14px;">Auto-detect GPS location</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div style="height:12px;"></div>
+      <button class="btn-p" onclick="saveDiveLog()">Next: Upload Video →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIVE COMPUTER MODAL ===== -->
+<div class="modal-overlay" id="dc-modal" onclick="if(event.target===this)closeDcModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:4px;">🖥️ Dive Computer Import</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Select your device type to auto-fill dive data</div>
+
+    <!-- Brand selector -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;" id="dc-brands">
+      <button class="dc-brand-btn" onclick="selectBrand(this,'Suunto')">
+        <div style="font-size:22px;">🔵</div><div>Suunto</div>
+      </button>
+      <button class="dc-brand-btn" onclick="selectBrand(this,'Garmin')">
+        <div style="font-size:22px;">🟢</div><div>Garmin</div>
+      </button>
+      <button class="dc-brand-btn" onclick="selectBrand(this,'Shearwater')">
+        <div style="font-size:22px;">🔴</div><div>Shearwater</div>
+      </button>
+      <button class="dc-brand-btn" onclick="selectBrand(this,'OSTC')">
+        <div style="font-size:22px;">⚫</div><div>OSTC / HeinrichsWeikamp</div>
+      </button>
+      <button class="dc-brand-btn" onclick="selectBrand(this,'Mares')">
+        <div style="font-size:22px;">🟡</div><div>Mares</div>
+      </button>
+      <button class="dc-brand-btn" onclick="selectBrand(this,'Scubapro')">
+        <div style="font-size:22px;">🟠</div><div>Scubapro</div>
+      </button>
+    </div>
+
+    <!-- Import method tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button class="lb-tab active" id="dc-tab-bt" onclick="setDcTab('bt')" style="flex:1;">📶 Bluetooth</button>
+      <button class="lb-tab" id="dc-tab-usb" onclick="setDcTab('usb')" style="flex:1;">🔌 USB / File</button>
+    </div>
+
+    <div id="dc-bt-panel">
+      <div class="card" style="margin:0 0 12px;text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;" id="dc-scan-icon">📡</div>
+        <div style="font-size:14px;font-weight:600;" id="dc-scan-title">Scanning for devices...</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="dc-scan-sub">Make sure Bluetooth is on and your computer is nearby</div>
+        <div class="prog-bar" style="margin-top:14px;"><div class="prog-fill" id="dc-scan-bar" style="width:0%;animation:dcScan 2s ease infinite alternate;"></div></div>
+      </div>
+      <div id="dc-found-device" style="display:none;" class="card" style="margin:0 0 12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">🖥️</span>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;" id="dc-device-name">Suunto D5</div>
+            <div style="font-size:12px;color:var(--muted);" id="dc-device-info">Last dive: 3 dives available</div>
+          </div>
+          <span class="tag tag-teal">Found</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="dc-usb-panel" style="display:none;">
+      <div class="inp-label">Upload dive computer export file</div>
+      <div class="upload-zone" style="margin:0 0 12px;padding:24px;" onclick="document.getElementById('dc-file').click()">
+        <div style="font-size:28px;">📂</div>
+        <div style="font-size:13px;font-weight:600;margin-top:8px;">Select file</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">.xml .uddf .dlf .csv supported</div>
+      </div>
+      <input type="file" id="dc-file" accept=".xml,.uddf,.dlf,.csv,.fit" style="display:none;" onchange="dcFileSelected(this)">
+    </div>
+
+    <!-- Parsed data preview -->
+    <div id="dc-preview" style="display:none;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Data ready to import</div>
+      <div style="background:rgba(0,229,196,0.06);border:1px solid var(--teal-border);border-radius:12px;padding:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+          <div><span style="color:var(--muted);">Site</span><br><strong id="dc-p-site">—</strong></div>
+          <div><span style="color:var(--muted);">Duration</span><br><strong id="dc-p-dur">—</strong></div>
+          <div><span style="color:var(--muted);">Max Depth</span><br><strong id="dc-p-depth">—</strong></div>
+          <div><span style="color:var(--muted);">Temp</span><br><strong id="dc-p-temp">—</strong></div>
+          <div><span style="color:var(--muted);">Avg Depth</span><br><strong id="dc-p-avgdepth">—</strong></div>
+          <div><span style="color:var(--muted);">Tank Pressure</span><br><strong id="dc-p-tank">—</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn-s" onclick="closeDcModal()" style="flex:1;">Cancel</button>
+      <button class="btn-p" id="dc-import-btn" onclick="importDcData()" style="flex:2;display:none;">✓ Import to Log</button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes dcScan{from{width:20%}to{width:90%}}
+.dc-brand-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;
+  padding:12px 10px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.dc-brand-btn:hover{border-color:var(--teal);background:var(--teal-dim);}
+.dc-brand-btn.selected{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);}
+</style>
+
+<!-- ===== VIDEO UPLOAD & AI ANALYSIS ===== -->
+<div class="screen" id="screen-videoupload">
+  <div class="page-header">
+    <div class="back-link" onclick="go('divelog')">← Back</div>
+    <div class="page-title">Upload Dive Video</div>
+    <div class="page-subtitle">6-model YOLO pipeline scans your footage</div>
+  </div>
+  <div class="scroll-area">
+
+    <!-- Server status -->
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px 10px;">
+      <div id="server-dot" style="width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;transition:background .3s;"></div>
+      <span id="server-label" style="font-size:12px;color:var(--muted);">Checking backend...</span>
+    </div>
+
+    <!-- Model badges -->
+    <div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 16px 12px;">
+      <span class="tag tag-teal" style="font-size:10px;">FishSpecies (481)</span>
+      <span class="tag tag-teal" style="font-size:10px;">Seychelles (72)</span>
+      <span class="tag tag-teal" style="font-size:10px;">FishInv (15)</span>
+      <span class="tag tag-teal" style="font-size:10px;">ReefFamilies</span>
+      <span class="tag tag-teal" style="font-size:10px;">MarineLife</span>
+    </div>
+
+    <input type="file" id="vid-input" accept="video/*" style="display:none;" onchange="videoFileSelected(this)">
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('vid-input').click()">
+      <div style="font-size:40px;margin-bottom:10px;">🎬</div>
+      <div style="font-size:15px;font-weight:600;" id="upload-zone-title">Tap to select dive video</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="upload-zone-sub">MP4 or MOV file</div>
+    </div>
+
+    <div id="analysis-card" style="display:none;" class="card">
+      <div style="text-align:center;">
+        <div style="font-size:28px;">🔍</div>
+        <div style="font-size:16px;font-weight:700;margin-top:8px;">Analysing your dive...</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;" id="analysis-stage">Starting...</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div style="font-size:12px;color:var(--teal);text-align:center;" id="analysis-detail">marine-detect pipeline running</div>
+    </div>
+
+    <div style="padding:0 16px;">
+      <button class="btn-p" id="start-analysis-btn" onclick="startAIAnalysis()" style="display:none;">
+        🤖 Run marine-detect Analysis
+      </button>
+    </div>
+
+    <div style="margin:12px 16px 0;">
+      <div class="divider"></div>
+      <div class="inp-label" style="margin-top:12px;">No server? Run demo mode</div>
+      <div class="card" style="margin:0;display:flex;align-items:center;gap:12px;cursor:pointer;padding:14px;" onclick="runDemoAnalysis()">
+        <span style="font-size:22px;">🎭</span>
+        <div><div style="font-size:14px;font-weight:600;">Demo mode</div>
+        <div style="font-size:12px;color:var(--muted);">Simulates the full pipeline with sample GBR data</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SPECIES REPORT ===== -->
+<div class="screen" id="screen-report">
+  <div class="page-header">
+    <div class="back-link" onclick="go('home')">← Home</div>
+    <div class="page-title">Species Report</div>
+    <div id="report-subtitle" class="page-subtitle">Your dive analysis results</div>
+  </div>
+  <div class="scroll-area">
+    <div id="report-tags" style="display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap;"></div>
+
+    <div class="sp-table">
+      <div class="sp-header"><span>Species</span><span>Count</span><span>Points</span></div>
+      <div id="report-species-body"></div>
+    </div>
+
+    <div id="report-flagged-box" style="display:none;" class="unid-box">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--coral);">⚑ Unidentified species flagged</div>
+        <div style="font-size:11px;color:var(--muted);" id="report-flagged-ts">Needs manual expert review</div>
+      </div>
+      <button class="btn-s" style="width:auto;padding:8px 14px;font-size:12px;" onclick="go('home')">Review</button>
+    </div>
+
+    <div id="track-details-section" style="display:none;margin:0 16px 12px;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);">Individual Sightings</div>
+      <div id="track-details-body"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Export this report</div>
+      <div class="inp-label">Dive name (for export)</div>
+      <input class="inp" id="export-dive-name" placeholder="e.g. Cod Hole June 2026">
+      <div style="display:flex;gap:8px;">
+        <button class="btn-s" style="flex:1;padding:11px;font-size:13px;" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn-s" style="flex:1;padding:11px;font-size:13px;" onclick="exportTXT()">⬇ Report</button>
+      </div>
+    </div>
+
+    <div style="padding:12px 16px 4px;">
+      <button class="btn-p" onclick="finaliseAndSave()">✓ Save dive & finish</button>
+      <button class="btn-s" style="margin-top:8px;" onclick="go('divestats')">View full dive stats →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIVE STATS ===== -->
+<div class="screen" id="screen-divestats">
+  <div class="page-header">
+    <div class="back-link" onclick="go('home')">← Back</div>
+    <div class="page-title">Dive Summary</div>
+    <div id="stats-subtitle" class="page-subtitle">Your dive details</div>
+  </div>
+  <div class="scroll-area">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 12px;">
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-dur">—</div><div style="font-size:11px;color:var(--muted);">Duration</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-depth">—</div><div style="font-size:11px;color:var(--muted);">Max Depth</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-sp">—</div><div style="font-size:11px;color:var(--muted);">Species</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="stats-pts">—</div><div style="font-size:11px;color:var(--muted);">Points</div></div>
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:6px;">Notes</div><div style="font-size:13px;color:var(--muted);" id="stats-notes">—</div></div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px;flex-direction:column;">
+      <button class="btn-p" id="stats-viewreport-btn" onclick="go('report')">View species report</button>
+      <button class="btn-s" onclick="go('home')">← Back to home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PREVIOUS DIVES ===== -->
+<div class="screen" id="screen-mydives">
+  <div class="page-header">
+    <div class="back-link" onclick="go('home');updateHome();">← Home</div>
+    <div class="page-title">Previous Dives</div>
+    <div class="page-subtitle" id="mydives-subtitle">Review past dives and reports</div>
+  </div>
+  <div class="scroll-area">
+    <div id="mydives-list"></div>
+  </div>
+</div>
+
+<!-- ===== FISH DEX ===== -->
+<div class="screen" id="screen-fishdex">
+  <div class="page-header">
+    <div class="page-title">Fish Dex</div>
+    <div class="page-subtitle" id="dex-subtitle">Loading species...</div>
+  </div>
+  <div class="scroll-area">
+    <div style="margin:0 16px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input style="background:none;border:none;outline:none;color:var(--text);font-size:14px;flex:1;font-family:'Space Grotesk',sans-serif;" placeholder="Search species, location..." oninput="filterDex(this.value)" id="dex-search">
+    </div>
+    <div style="display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;">
+      <button class="tag tag-teal" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDex('')">All</button>
+      <button class="tag tag-coral" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDexStatus('unseen')">Not seen</button>
+      <button class="tag tag-gold" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDexStatus('rare')">Rare</button>
+    </div>
+    <div class="dex-grid" id="dex-grid"></div>
+    <div style="padding:12px 16px 0;font-size:11px;color:var(--muted);text-align:center;">🟢 Seen recently &nbsp;·&nbsp; 🔴 Not spotted &nbsp;·&nbsp; 🟡 Rare species</div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="go('home')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn active" onclick="go('fishdex')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn" onclick="go('leaderboard')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn" onclick="go('achievements');renderAchievements();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Awards</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('profile');renderProfile();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<!-- ===== LEADERBOARD ===== -->
+<div class="screen" id="screen-leaderboard">
+  <div class="page-header">
+    <div class="page-title">Leaderboard</div>
+    <div class="page-subtitle">Compete with divers worldwide</div>
+  </div>
+  <div class="scroll-area">
+    <div class="lb-tabs">
+      <button class="lb-tab active" id="tab-global" onclick="setLbTab('global')">Global</button>
+      <button class="lb-tab" id="tab-local" onclick="setLbTab('local')">Local</button>
+      <button class="lb-tab" id="tab-friends" onclick="setLbTab('friends')">Friends</button>
+    </div>
+    <div id="lb-global">
+      <div style="padding:0 16px 8px;font-size:12px;color:var(--muted);">Most seen globally: 🐠 Clownfish</div>
+      <div id="lb-global-rows"></div>
+    </div>
+    <div id="lb-local" style="display:none;">
+      <div style="padding:0 16px 8px;">
+        <div style="font-size:12px;color:var(--muted);">Most seen here: 🦈 Whitetip Reef Shark</div>
+      </div>
+      <div id="lb-local-rows"></div>
+      <div style="padding:8px 16px 0;">
+        <button class="btn-s" style="font-size:12px;padding:10px;" onclick="goResearch()">🔬 Researcher Analysis →</button>
+      </div>
+    </div>
+    <div id="lb-friends" style="display:none;">
+      <div id="lb-friends-rows"></div>
+      <div class="friends-extra">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Group insights</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;"><span style="color:var(--muted);">Most spotted species</span><span style="font-weight:600;">🐢 Green Sea Turtle</span></div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="go('home')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn" onclick="go('fishdex')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn active" onclick="go('leaderboard')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn" onclick="go('achievements');renderAchievements();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Awards</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('profile');renderProfile();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<!-- ===== RESEARCHER GATE MODAL ===== -->
+<div class="modal-overlay" id="researcher-gate-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-sheet" style="text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Researchers Only</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">
+      The Researcher Analysis page is restricted to verified marine researchers and scientists.<br><br>
+      If you have a research organisation affiliation, create a researcher account to access location-based biodiversity reports and aggregated dive data.
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-s" style="flex:1;" onclick="document.getElementById('researcher-gate-modal').classList.remove('open')">Close</button>
+      <button class="btn-p" style="flex:1;" onclick="document.getElementById('researcher-gate-modal').classList.remove('open');doLogout()">Sign up as researcher</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESEARCHER ANALYSIS ===== -->
+<div class="screen" id="screen-researchanalysis">
+  <div class="page-header">
+    <div class="back-link" onclick="go('leaderboard')">← Leaderboard</div>
+    <div class="page-title">Research Hub</div>
+    <div class="page-subtitle" id="ra-subtitle">Define surveys · View filtered reports</div>
+  </div>
+
+  <!-- Tab bar -->
+  <div style="display:flex;gap:6px;padding:0 16px 4px;flex-shrink:0;">
+    <button class="lb-tab active" id="ra-tab-survey" onclick="setRaTab('survey')" style="flex:1;">📋 My Surveys</button>
+    <button class="lb-tab" id="ra-tab-reports" onclick="setRaTab('reports')" style="flex:1;">📊 Reports</button>
+    <button class="lb-tab" id="ra-tab-log" onclick="setRaTab('log')" style="flex:1;">📝 Dive Log</button>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- ===== SURVEYS TAB ===== -->
+    <div id="ra-survey-panel">
+
+      <div class="researcher-badge" style="margin-top:12px;">
+        <div style="font-size:18px;">🔬</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold);">Survey Builder</div>
+          <div style="font-size:11px;color:var(--muted);">Define what you're studying. Community divers will automatically generate filtered reports matching your survey.</div>
+        </div>
+      </div>
+
+      <!-- Existing surveys -->
+      <div class="section-label" style="margin-top:4px;">YOUR SURVEYS</div>
+      <div id="ra-survey-list">
+        <div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No surveys yet. Create your first one below.</div>
+      </div>
+
+      <div style="padding:0 16px 12px;">
+        <button class="btn-p" onclick="openSurveyBuilder()">+ Create New Survey</button>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS TAB ===== -->
+    <div id="ra-reports-panel" style="display:none;">
+
+      <!-- Survey selector -->
+      <div style="padding:12px 16px 0;">
+        <div class="inp-label">Filter by survey</div>
+        <select class="inp" id="ra-report-survey-select" onchange="renderResearchReports()" style="margin-bottom:12px;">
+          <option value="all">All community dives</option>
+        </select>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 12px;">
+        <div class="card" style="margin:0;text-align:center;padding:10px;">
+          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="ra-stat-dives">0</div>
+          <div style="font-size:10px;color:var(--muted);">Dives matched</div>
+        </div>
+        <div class="card" style="margin:0;text-align:center;padding:10px;">
+          <div style="font-size:18px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="ra-stat-species">0</div>
+          <div style="font-size:10px;color:var(--muted);">Indicator sightings</div>
+        </div>
+        <div class="card" style="margin:0;text-align:center;padding:10px;">
+          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="ra-stat-divers">0</div>
+          <div style="font-size:10px;color:var(--muted);">Divers contributing</div>
+        </div>
+      </div>
+
+      <!-- Filtered species report table -->
+      <div class="section-label">INDICATOR SPECIES SIGHTINGS</div>
+      <div id="ra-species-report" style="margin:0 16px;">
+        <div style="color:var(--muted);font-size:13px;padding:8px 0;">No matching data yet. Community dives will appear here as divers log footage in your survey area.</div>
+      </div>
+
+      <!-- AI generated summary -->
+      <div class="section-label" style="margin-top:12px;">AI SUMMARY</div>
+      <div class="analysis-card" id="ra-ai-summary">
+        <div class="analysis-title">Waiting for data</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">Once community dives are matched to your survey, an AI-generated summary of species abundance, trends, and reef health indicators will appear here.</div>
+      </div>
+
+      <div style="padding:8px 16px 16px;">
+        <button class="btn-p" onclick="exportResearchReport()">⬇ Export Report (CSV)</button>
+      </div>
+    </div>
+
+    <!-- ===== RESEARCHER DIVE LOG TAB ===== -->
+    <div id="ra-log-panel" style="display:none;">
+      <div class="researcher-badge" style="margin-top:12px;">
+        <div style="font-size:18px;">📝</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold);">Extended Dive Log</div>
+          <div style="font-size:11px;color:var(--muted);">Extra fields for researchers to record survey conditions alongside normal dive data.</div>
+        </div>
+      </div>
+      <div style="padding:0 16px;">
+        <div class="inp-label">Survey this dive belongs to</div>
+        <select class="inp" id="ra-log-survey" style="margin-bottom:12px;">
+          <option value="">None — general dive</option>
+        </select>
+        <div class="inp-label">Survey method used</div>
+        <input class="inp" id="ra-log-method" placeholder="e.g. Belt transect, Roving diver, BRUVs...">
+        <div class="inp-label">Transect length / width (m)</div>
+        <div style="display:flex;gap:8px;">
+          <input class="inp" id="ra-log-transect-l" type="number" placeholder="Length" style="flex:1;margin-bottom:12px;">
+          <input class="inp" id="ra-log-transect-w" type="number" placeholder="Width" style="flex:1;margin-bottom:12px;">
+        </div>
+        <div class="inp-label">Substrate type</div>
+        <select class="inp" style="margin-bottom:12px;">
+          <option>Hard coral dominated</option>
+          <option>Soft coral dominated</option>
+          <option>Mixed reef</option>
+          <option>Rubble</option>
+          <option>Sand / seagrass</option>
+          <option>Wall / drop-off</option>
+        </select>
+        <div class="inp-label">Estimated live coral cover (%)</div>
+        <input class="inp" id="ra-log-coral" type="number" placeholder="e.g. 65" min="0" max="100">
+        <div class="inp-label">Current strength</div>
+        <select class="inp" style="margin-bottom:12px;">
+          <option>None</option>
+          <option>Mild</option>
+          <option>Moderate</option>
+          <option>Strong</option>
+        </select>
+        <div class="inp-label">Bleaching observed?</div>
+        <select class="inp" style="margin-bottom:12px;">
+          <option>None observed</option>
+          <option>Minor (&lt;10% of coral)</option>
+          <option>Moderate (10–50%)</option>
+          <option>Severe (&gt;50%)</option>
+        </select>
+        <div class="inp-label">Additional field notes</div>
+        <textarea class="inp" id="ra-log-notes" placeholder="Any observations not captured above..." style="min-height:80px;resize:none;"></textarea>
+        <div style="height:12px;"></div>
+        <button class="btn-p" onclick="saveResearchLog()">Save Extended Log</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== SURVEY BUILDER MODAL ===== -->
+<div class="modal-overlay" id="survey-builder-modal" onclick="if(event.target===this)closeSurveyBuilder()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px;">📋 New Survey</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Define what community divers will help you track</div>
+
+    <div class="inp-label">Survey name</div>
+    <input class="inp" id="sb-name" placeholder="e.g. GBR Shark Population Study 2026">
+
+    <div class="inp-label">Location / region</div>
+    <input class="inp" id="sb-location" placeholder="e.g. Great Barrier Reef, QLD">
+
+    <div class="inp-label">Research objective</div>
+    <textarea class="inp" id="sb-objective" placeholder="What are you trying to understand? e.g. Monitor whitetip reef shark population recovery across Cod Hole following coral restoration." style="min-height:72px;resize:none;"></textarea>
+
+    <div class="inp-label">Survey method</div>
+    <select class="inp" id="sb-method" style="margin-bottom:12px;">
+      <option>Roving diver survey</option>
+      <option>Belt transect</option>
+      <option>Point count</option>
+      <option>BRUVs (baited remote)</option>
+      <option>Timed swim</option>
+      <option>Custom — described below</option>
+    </select>
+
+    <div class="inp-label">Indicator species <span style="color:var(--muted);font-weight:400;">(tap to select — reports will filter for these)</span></div>
+    <div id="sb-species-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;"></div>
+
+    <div class="inp-label">Custom species / notes</div>
+    <input class="inp" id="sb-custom-species" placeholder="Any species not listed above...">
+
+    <div class="inp-label">Minimum depth (m)</div>
+    <div style="display:flex;gap:8px;">
+      <input class="inp" id="sb-depth-min" type="number" placeholder="Min" style="flex:1;margin-bottom:12px;">
+      <input class="inp" id="sb-depth-max" type="number" placeholder="Max" style="flex:1;margin-bottom:12px;">
+    </div>
+
+    <div class="inp-label">Survey active until</div>
+    <input class="inp" id="sb-end-date" type="date" style="margin-bottom:16px;">
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn-s" onclick="closeSurveyBuilder()" style="flex:1;">Cancel</button>
+      <button class="btn-p" onclick="saveSurvey()" style="flex:2;">Create Survey</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== ACHIEVEMENTS ===== -->
+<div class="screen" id="screen-achievements">
+  <div class="page-header">
+    <div class="page-title">Achievements</div>
+    <div class="page-subtitle" id="ach-subtitle">Loading...</div>
+  </div>
+  <div class="scroll-area">
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="go('home')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn" onclick="go('fishdex')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn" onclick="go('leaderboard')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn active" onclick="go('achievements');renderAchievements();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Awards</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('profile');renderProfile();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<!-- ===== PROFILE ===== -->
+<div class="screen" id="screen-profile">
+  <div class="page-header">
+    <div class="page-title" id="profile-title">My Profile</div>
+    <div class="page-subtitle" id="profile-subtitle">Your dive history</div>
+  </div>
+  <div class="scroll-area">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px;">
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="prof-dives">0</div><div style="font-size:10px;color:var(--muted);">Dives</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="prof-pts">0</div><div style="font-size:10px;color:var(--muted);">Points</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="prof-sp">0</div><div style="font-size:10px;color:var(--muted);">Species</div></div>
+    </div>
+    <div class="section-label">DIVE HISTORY</div>
+    <div id="profile-dives-list"></div>
+    <div style="padding:0 16px 16px;margin-top:8px;">
+      <button class="btn-s" onclick="doLogout()" style="color:var(--coral);border-color:rgba(255,107,74,0.25);">Sign out</button>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="go('home')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn" onclick="go('fishdex')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn" onclick="go('leaderboard')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn" onclick="go('achievements');renderAchievements();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Awards</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn active" onclick="go('profile');renderProfile();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<!-- ===== PHOTO DETECT ===== -->
+<div class="screen" id="screen-photodetect">
+  <div class="page-header">
+    <div class="back-link" onclick="go('home')">← Home</div>
+    <div class="page-title">Photo ID</div>
+    <div class="page-subtitle">Upload a photo · AI identifies instantly</div>
+  </div>
+  <div class="scroll-area">
+
+    <!-- Upload zone -->
+    <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="photoSelected(this)">
+    <div class="upload-zone" id="photo-upload-zone" onclick="document.getElementById('photo-input').click()"
+      style="margin:8px 16px 12px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div style="font-size:48px;margin-bottom:12px;" id="photo-zone-icon">📷</div>
+      <div style="font-size:15px;font-weight:600;" id="photo-zone-title">Tap to upload a photo</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="photo-zone-sub">JPG, PNG, HEIC — from your camera roll or dive camera</div>
+    </div>
+
+    <!-- Preview image -->
+    <div id="photo-preview-wrap" style="display:none;margin:0 16px 12px;position:relative;">
+      <img id="photo-preview-img" style="width:100%;border-radius:16px;max-height:260px;object-fit:cover;display:block;" alt="Uploaded photo">
+      <!-- Scan animation overlay -->
+      <div id="photo-scan-overlay" style="display:none;position:absolute;inset:0;border-radius:16px;overflow:hidden;pointer-events:none;">
+        <div style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent);box-shadow:0 0 12px var(--teal);animation:photoScan 1.8s ease-in-out infinite;" id="photo-scan-bar"></div>
+      </div>
+      <!-- Detection boxes injected here by JS -->
+      <div id="photo-boxes"></div>
+      <!-- Retake button -->
+      <button onclick="resetPhotoDetect()" style="position:absolute;top:10px;right:10px;background:rgba(10,22,40,0.85);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">↩ New photo</button>
+    </div>
+
+    <!-- Analyse button -->
+    <div style="padding:0 16px 12px;" id="photo-analyse-btn-wrap" style="display:none;">
+      <button class="btn-p" id="photo-analyse-btn" onclick="runPhotoDetection()" style="display:none;">
+        🔍 Identify Species
+      </button>
+    </div>
+
+    <!-- Analysing indicator -->
+    <div id="photo-analysing" style="display:none;" class="card" style="margin:0 16px 12px;">
+      <div style="text-align:center;padding:8px 0;">
+        <div style="font-size:24px;margin-bottom:8px;">🔬</div>
+        <div style="font-size:14px;font-weight:700;" id="photo-analyse-stage">Scanning image...</div>
+        <div class="prog-bar" style="margin:12px 0 6px;"><div class="prog-fill" id="photo-prog-fill" style="width:0%;transition:width .4s;"></div></div>
+        <div style="font-size:12px;color:var(--teal);" id="photo-analyse-detail">Running marine-detect models</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="photo-results" style="display:none;">
+
+      <!-- Top match card -->
+      <div class="section-label">TOP MATCH</div>
+      <div id="photo-top-match" class="card" style="display:flex;gap:14px;align-items:center;">
+        <div id="photo-match-emoji" style="font-size:40px;flex-shrink:0;">🐟</div>
+        <div style="flex:1;">
+          <div style="font-size:18px;font-weight:700;" id="photo-match-name">—</div>
+          <div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px;" id="photo-match-sci">—</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;">
+              <div id="photo-conf-bar" style="height:100%;background:linear-gradient(90deg,var(--teal-dim),var(--teal));border-radius:3px;width:0%;transition:width .8s;"></div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--teal);" id="photo-conf-pct">0%</span>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;" id="photo-match-tags"></div>
+        </div>
+      </div>
+
+      <!-- All detections table -->
+      <div class="section-label" style="margin-top:4px;">ALL DETECTIONS</div>
+      <div id="photo-detections-table" style="margin:0 16px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">
+        <div style="display:grid;grid-template-columns:1fr 80px 60px;background:rgba(0,229,196,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
+          <span>Species</span><span>Confidence</span><span>Points</span>
+        </div>
+        <div id="photo-detections-rows"></div>
+      </div>
+
+      <!-- Compare section -->
+      <div class="section-label" style="margin-top:12px;">COMPARE WITH FISH DEX</div>
+      <div id="photo-compare-card" class="card" style="display:flex;gap:12px;align-items:center;cursor:pointer;" onclick="go('fishdex')">
+        <span style="font-size:28px;">📖</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;">View in Fish Dex</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="photo-compare-sub">See full species profile and similar species</div>
+        </div>
+        <div style="color:var(--muted);margin-left:auto;">›</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="padding:12px 16px 4px;display:flex;flex-direction:column;gap:8px;">
+        <button class="btn-p" onclick="logPhotoSighting()">✓ Log this sighting</button>
+        <button class="btn-s" onclick="resetPhotoDetect()">📷 Identify another photo</button>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="go('home');updateHome();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+    <button class="nav-btn" onclick="go('fishdex')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>Fish Dex</button>
+    <button class="nav-btn active" onclick="go('photodetect')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('leaderboard');renderLeaderboard();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Ranks</button>
+    <button class="nav-btn" onclick="go('photodetect');resetPhotoDetect();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Photo ID</button>
+    <button class="nav-btn" onclick="go('profile');renderProfile();"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</button>
+  </nav>
+</div>
+
+<style>
+@keyframes photoScan{0%{top:0%;opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{top:100%;opacity:0;}}
+.det-box{position:absolute;border:2px solid var(--teal);border-radius:6px;pointer-events:none;}
+.det-box-label{position:absolute;top:-22px;left:0;background:rgba(0,229,196,0.92);color:var(--bg);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:'Space Mono',monospace;}
+.det-box.flagged{border-color:var(--coral);}
+.det-box.flagged .det-box-label{background:rgba(255,107,74,0.9);}
+</style>
+
+<!-- TOAST -->
+<div id="toast" style="position:absolute;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal);color:var(--bg);padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:300;"></div>
+
+</div><!-- end phone -->
+
+<script>
+// ============================================================
+// STATE — stored in localStorage
+// ============================================================
+const DB = {
+  get users()  { return JSON.parse(localStorage.getItem('db_users')  || '{}'); },
+  get dives()  { return JSON.parse(localStorage.getItem('db_dives')  || '[]'); },
+  set users(v) { localStorage.setItem('db_users',  JSON.stringify(v)); },
+  set dives(v) { localStorage.setItem('db_dives',  JSON.stringify(v)); },
+  addDive(d)   { const ds = this.dives; ds.unshift(d); this.dives = ds; },
+  updateUser(u){ const us = this.users; us[u.username] = u; this.users = us; }
+};
+
+let currentUser = JSON.parse(sessionStorage.getItem('cu') || 'null');
+let pendingDive = {};      // dive log data being built
+let pendingResults = null; // latest AI analysis results
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function go(screen) {
+  // Researcher-only screens — intercept if not a researcher
+  if (screen === 'researchanalysis') {
+    const u = currentUser ? DB.users[currentUser.username] || currentUser : null;
+    if (!u || u.type !== 'researcher') {
+      toast('🔒 Researcher accounts only', true);
+      document.getElementById('researcher-gate-modal').classList.add('open');
+      return;
+    }
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  const sa = document.querySelector('#screen-' + screen + ' .scroll-area');
+  if (sa) sa.scrollTop = 0;
+  const showBar = !['splash','signup','login'].includes(screen);
+  document.getElementById('status-bar').style.display = showBar ? 'flex' : 'none';
+  updateClock();
+  // Initialise researcher hub whenever it's opened
+  if (screen === 'researchanalysis') {
+    renderSurveyList();
+    updateSurveySelects();
+  }
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('sb-time').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+setInterval(updateClock, 30000);
+
+function toast(msg, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isErr ? 'var(--coral)' : 'var(--teal)';
+  el.style.color = isErr ? 'white' : 'var(--bg)';
+  el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }, 2500);
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+let suUserType = 'casual';
+function suType(t) {
+  suUserType = t;
+  document.getElementById('su-casual').classList.toggle('sel', t==='casual');
+  document.getElementById('su-researcher').classList.toggle('sel', t==='researcher');
+  document.getElementById('su-researcher-fields').style.display = t==='researcher' ? 'block' : 'none';
+  document.getElementById('su-terms-row').style.display = t==='casual' ? 'flex' : 'none';
+}
+
+function toggleCb(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('chk');
+  el.innerHTML = el.classList.contains('chk') ? '✓' : '';
+}
+
+function doSignup() {
+  const username = document.getElementById('su-user').value.trim();
+  const password = document.getElementById('su-pass').value;
+  const email = document.getElementById('su-email').value.trim();
+  const errEl = document.getElementById('su-err');
+  errEl.style.display = 'none';
+
+  if (!username || !password || !email) { showErr(errEl,'Please fill in all required fields'); return; }
+  if (password.length < 6) { showErr(errEl,'Password must be at least 6 characters'); return; }
+  if (suUserType === 'casual' && !document.getElementById('su-cb').classList.contains('chk')) {
+    showErr(errEl,'Please agree to the data sharing terms'); return; }
+
+  const users = DB.users;
+  if (users[username]) { showErr(errEl,'Username already taken — try another'); return; }
+
+  const user = {
+    username, email, password, type: suUserType,
+    org: document.getElementById('su-org')?.value || '',
+    points: 0, totalDives: 0, totalSpecies: 0,
+    seenSpecies: [], createdAt: new Date().toISOString()
+  };
+  DB.updateUser(user);
+  currentUser = user;
+  sessionStorage.setItem('cu', JSON.stringify(user));
+  go('intro');
+}
+
+function showLogin() { go('login'); }
+
+function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+
+  const users = DB.users;
+  if (!users[username] || users[username].password !== password) {
+    showErr(errEl,'Incorrect username or password'); return; }
+
+  currentUser = users[username];
+  sessionStorage.setItem('cu', JSON.stringify(currentUser));
+  go('home'); updateHome();
+}
+
+function doLogout() {
+  currentUser = null;
+  sessionStorage.removeItem('cu');
+  go('splash');
+}
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+// ============================================================
+// HOME
+// ============================================================
+// ── Achievement count on home screen ──────────────────
+function updateHome() {
+  if (!currentUser) return;
+  const u = DB.users[currentUser.username] || currentUser;
+  document.getElementById('home-username').textContent = u.username;
+  document.getElementById('home-dives').textContent = u.totalDives || 0;
+  document.getElementById('home-pts').textContent = (u.points || 0).toLocaleString();
+  document.getElementById('home-species').textContent = (u.seenSpecies || []).length;
+
+  const users = Object.values(DB.users).sort((a,b) => (b.points||0)-(a.points||0));
+  const rank = users.findIndex(x => x.username === u.username) + 1;
+  document.getElementById('home-rank').textContent = '#' + (rank || '—');
+
+  // Achievement count
+  const unlocked = ACHIEVEMENTS.filter(a => { try { return a.check(u); } catch { return false; } }).length;
+  const achCount = document.getElementById('home-ach-count');
+  const achSub   = document.getElementById('home-ach-sub');
+  if (achCount) achCount.textContent = unlocked + ' awards';
+  if (achSub)   achSub.textContent   = unlocked + ' of ' + ACHIEVEMENTS.length + ' unlocked';
+
+  // Recent dives
+  const myDives = DB.dives.filter(d => d.username === u.username).slice(0,4);
+  const container = document.getElementById('home-recent-dives');
+  if (myDives.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No dives yet. Log your first dive!</div>';
+    return;
+  }
+  container.innerHTML = myDives.map(d => `
+    <div class="dive-card" onclick="viewDive('${d.id}')">
+      <div>
+        <div style="font-size:15px;font-weight:600;">${d.site}</div>
+        <div style="font-size:12px;color:var(--muted);">${d.dateShort} · ${d.duration}min · ${d.depth}m</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
+        <div style="font-size:10px;color:var(--muted);">pts</div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// DIVE LOG
+// ============================================================
+function saveDiveLog() {
+  const site = document.getElementById('dl-site').value.trim();
+  if (!site) { toast('Please enter a dive site name', true); return; }
+  const now = new Date();
+  pendingDive = {
+    id: 'dive_' + Date.now(),
+    username: currentUser.username,
+    site, location: document.getElementById('dl-location').value.trim() || 'Unknown',
+    date: now.toISOString(),
+    dateShort: now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+    duration: parseInt(document.getElementById('dl-duration').value) || 0,
+    depth: parseInt(document.getElementById('dl-depth').value) || 0,
+    partners: document.getElementById('dl-partners').value.trim(),
+    notes: document.getElementById('dl-notes').value.trim(),
+    species: [], pointsEarned: 0, flagged: []
+  };
+  go('videoupload');
+  // Reset upload UI so a fresh upload zone is shown
+  selectedFile = null;
+  document.getElementById('vid-input').value = '';
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('upload-zone').classList.remove('has-file');
+  document.getElementById('upload-zone-title').textContent = 'Tap to select dive video';
+  document.getElementById('upload-zone-sub').textContent = 'MP4, MOV, or image file';
+  document.getElementById('analysis-card').style.display = 'none';
+  document.getElementById('start-analysis-btn').style.display = 'none';
+}
+
+// ============================================================
+// VIDEO UPLOAD + AI ANALYSIS
+// ============================================================
+let selectedFile = null;
+let uploadedFilename = '';  // filename returned by backend after upload
+
+const BACKEND = 'http://localhost:8000';
+
+// Check if backend is running and show status dot
+async function checkBackend() {
+  try {
+    const r = await fetch(BACKEND + '/', {signal: AbortSignal.timeout(2000)});
+    if (r.ok) {
+      const dot = document.getElementById('server-dot');
+      const lbl = document.getElementById('server-label');
+      if (dot) { dot.style.background = 'var(--teal)'; dot.style.boxShadow = '0 0 6px var(--teal)'; }
+      if (lbl) lbl.textContent = 'Backend online · marine-detect ready';
+    }
+  } catch {
+    const lbl = document.getElementById('server-label');
+    if (lbl) lbl.textContent = 'Backend offline — use demo mode or run: uvicorn main:app';
+  }
+}
+checkBackend();
+
+function videoFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+  uploadedFilename = '';  // reset — will be set after backend upload
+  document.getElementById('upload-zone').classList.add('has-file');
+  document.getElementById('upload-zone-title').textContent = '📎 ' + file.name;
+  document.getElementById('upload-zone-sub').textContent = (file.size/1024/1024).toFixed(2) + ' MB — tap button to analyse';
+  document.getElementById('start-analysis-btn').style.display = 'block';
+  // Re-check backend is still up
+  checkBackend();
+}
+
+
+// Species emoji + rarity lookup for display
+const SPECIES_META = {
+  'Fish (unidentified)':      {emoji:'🐟', rarity:'common',   sci:'Unknown species'},
+  'Grouper':                  {emoji:'🐡', rarity:'uncommon', sci:'Serranidae'},
+  'Parrotfish':               {emoji:'🐠', rarity:'common',   sci:'Scaridae'},
+  'Butterfly Fish':           {emoji:'🦋', rarity:'common',   sci:'Chaetodontidae'},
+  'Snapper':                  {emoji:'🐟', rarity:'common',   sci:'Lutjanidae'},
+  'Moray Eel':                {emoji:'🐍', rarity:'uncommon', sci:'Muraenidae'},
+  'Sweet Lips':               {emoji:'🐠', rarity:'common',   sci:'Haemulidae'},
+  'Barramundi Cod':           {emoji:'🐡', rarity:'uncommon', sci:'Cromileptes altivelis'},
+  'Napoleon Wrasse':          {emoji:'🐟', rarity:'rare',     sci:'Cheilinus undulatus'},
+  'Bumphead Parrotfish':      {emoji:'🐠', rarity:'rare',     sci:'Bolbometopon muricatum'},
+  'Giant Clam':               {emoji:'🦪', rarity:'uncommon', sci:'Tridacna gigas'},
+  'Sea Urchin':               {emoji:'🦔', rarity:'common',   sci:'Echinoidea'},
+  'Sea Cucumber':             {emoji:'🥒', rarity:'common',   sci:'Holothuroidea'},
+  'Lobster':                  {emoji:'🦞', rarity:'uncommon', sci:'Palinuridae'},
+  'Crown-of-Thorns Starfish': {emoji:'⭐', rarity:'common',   sci:'Acanthaster planci'},
+  'Shark':                    {emoji:'🦈', rarity:'rare',     sci:'Selachimorpha'},
+  'Sea Turtle':               {emoji:'🐢', rarity:'uncommon', sci:'Chelonioidea'},
+  'Manta Ray / Stingray':     {emoji:'🪁', rarity:'rare',     sci:'Myliobatoidei'},
+};
+
+async function startAIAnalysis() {
+  if (!selectedFile) {
+    toast('No video uploaded — use demo mode or upload a file first', true);
+    return;
+  }
+
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('start-analysis-btn').style.display = 'none';
+  document.getElementById('analysis-card').style.display = 'block';
+
+  const fill  = document.getElementById('prog-fill');
+  const stage = document.getElementById('analysis-stage');
+  const detail= document.getElementById('analysis-detail');
+
+  const stages = [
+    [5,  'Uploading video to server...'],
+    [15, 'Extracting frames...'],
+    [30, 'Running FishSpecies model (481 species)...'],
+    [42, 'Running FishInv model...'],
+    [54, 'Running Seychelles model (72 species)...'],
+    [66, 'Running ReefFamilies model...'],
+    [78, 'Tracking unique animals across frames...'],
+    [88, 'Removing duplicate detections...'],
+    [95, 'Building species report...'],
+  ];
+  let si = 0;
+  const ticker = setInterval(() => {
+    if (si < stages.length) {
+      fill.style.width = stages[si][0] + '%';
+      stage.textContent = stages[si][1];
+      si++;
+    }
+  }, 3000);
+
+  try {
+    stage.textContent = 'Uploading video...';
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    const uploadResp = await fetch(BACKEND + '/upload', {
+      method: 'POST', body: formData
+    });
+    if (!uploadResp.ok) {
+      const err = await uploadResp.json();
+      throw new Error(err.detail || 'Upload failed');
+    }
+    const uploadData = await uploadResp.json();
+    const jobId = uploadData.job_id;
+
+    detail.textContent = 'Job ' + jobId + ' — processing on GPU';
+
+    let jobStatus = 'processing';
+    while (jobStatus === 'processing') {
+      await new Promise(r => setTimeout(r, 2000));
+      const pollResp = await fetch(BACKEND + '/jobs/' + jobId);
+      const pollData = await pollResp.json();
+      jobStatus = pollData.status;
+      if (pollData.error) throw new Error(pollData.error);
+    }
+
+    const resultsResp = await fetch(BACKEND + '/jobs/' + jobId + '/results');
+    if (!resultsResp.ok) throw new Error('Failed to fetch results');
+    const resultsData = await resultsResp.json();
+
+    clearInterval(ticker);
+    fill.style.width = '100%';
+
+    const results = convertBackendResults(resultsData);
+    results.jobId = jobId;
+    pendingResults = results;
+
+    const n = results.confirmed.length;
+    stage.textContent  = 'Analysis complete!';
+    detail.textContent = n + ' species identified across 6 models';
+    setTimeout(() => { go('report'); renderReport(results); }, 700);
+
+  } catch(err) {
+    clearInterval(ticker);
+    console.warn('Backend unavailable:', err.message);
+    fill.style.width = '100%';
+    stage.textContent  = 'Server offline — showing demo results';
+    detail.textContent = 'Start uvicorn main:app to use real detection';
+    const results = fallbackResults();
+    pendingResults = results;
+    setTimeout(() => { go('report'); renderReport(results); }, 1000);
+  }
+}
+
+function convertBackendResults(backendResults) {
+  if (!backendResults || !backendResults.species_summary) return fallbackResults();
+
+  const confirmed = backendResults.species_summary.map(r => {
+    const baseName = r.species.replace(/^School of /, '');
+    const meta = SPECIES_META[baseName] || {emoji:'🐟', rarity:'common', sci:''};
+    const rarityPts = {rare: 120, uncommon: 50, common: 15};
+    return {
+      species:    r.species,
+      scientific: meta.sci || '',
+      emoji:      meta.emoji || '🐟',
+      rarity:     r.rarity || meta.rarity || 'common',
+      count:      r.unique_count || 1,
+      points:     rarityPts[r.rarity] || Math.round((r.avg_confidence || 0.5) * 100),
+    };
+  });
+
+  const flagged = (backendResults.review_queue || []).map(r => ({
+    description: r.species_guess || 'Unidentified species',
+    timestamp: r.timestamp_sec != null
+      ? `${String(Math.floor(r.timestamp_sec / 60)).padStart(2,'0')}:${String(Math.floor(r.timestamp_sec % 60)).padStart(2,'0')}`
+      : '—',
+    confidence: r.max_confidence,
+    crop_path: r.crop_path,
+  }));
+
+  const trackDetails = (backendResults.track_details || []).map(t => ({
+    track_id: t.track_id,
+    species: t.species,
+    detection_count: t.detection_count,
+    best_confidence: t.best_confidence,
+    best_bbox: t.best_bbox,
+    best_crop: t.best_crop,
+    first_seen: t.first_seen,
+    last_seen: t.last_seen,
+    timestamps: t.timestamps || [],
+  }));
+
+  return {
+    confirmed,
+    flagged,
+    trackDetails,
+    coralHealth: '—',
+    visibility:  '—',
+    notes: `Detected by DiveBuddy (6-model YOLO pipeline). ${confirmed.length} species confirmed, ${flagged.length} flagged for review.`,
+    source: 'marine-detect',
+  };
+}
+
+function runDemoAnalysis() {
+  pendingDive = pendingDive.site ? pendingDive : {
+    id:'dive_demo_'+Date.now(), username:currentUser?.username||'guest',
+    site:'Cod Hole, Great Barrier Reef', location:'Queensland, Australia',
+    date:new Date().toISOString(),
+    dateShort:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+    duration:42, depth:18, partners:'', notes:'Demo dive — AI pipeline demonstration.', species:[], pointsEarned:0, flagged:[]
+  };
+  selectedFile = null;
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('start-analysis-btn').style.display = 'none';
+  document.getElementById('analysis-card').style.display = 'block';
+  const fill = document.getElementById('prog-fill');
+  const stage = document.getElementById('analysis-stage');
+  const detail = document.getElementById('analysis-detail');
+  const steps = [
+    [10,'Extracting frames...'],[30,'Running YOLO detection...'],[55,'Tracking unique animals...'],
+    [75,'Classifying species...'],[90,'Removing duplicates...'],[100,'Done!']
+  ];
+  let i = 0;
+  const t = setInterval(() => {
+    if (i < steps.length) { fill.style.width=steps[i][0]+'%'; stage.textContent=steps[i][1]; i++; }
+    else { clearInterval(t); const r = fallbackResults(); pendingResults=r; detail.textContent=r.confirmed.length+' species identified'; setTimeout(()=>{go('report');renderReport(r);},600); }
+  }, 500);
+}
+
+function fallbackResults() {
+  // Demo results using marine-detect species names exactly as the model outputs them
+  return {
+    confirmed:[
+      {species:'Parrotfish',     scientific:'Scaridae',                count:4, rarity:'common',   emoji:'🐠', points:15},
+      {species:'Moray Eel',      scientific:'Muraenidae',              count:2, rarity:'uncommon', emoji:'🐍', points:45},
+      {species:'Grouper',        scientific:'Serranidae',              count:3, rarity:'uncommon', emoji:'🐡', points:55},
+      {species:'Butterfly Fish', scientific:'Chaetodontidae',          count:6, rarity:'common',   emoji:'🦋', points:20},
+      {species:'Sea Turtle',     scientific:'Chelonioidea',            count:1, rarity:'uncommon', emoji:'🐢', points:70},
+      {species:'Shark',          scientific:'Selachimorpha',           count:1, rarity:'rare',     emoji:'🦈', points:120},
+      {species:'Crown-of-Thorns Starfish', scientific:'Acanthaster planci', count:3, rarity:'common', emoji:'⭐', points:15},
+    ],
+    flagged:[
+      {description:'Small pale fish — low confidence detection', timestamp:'04:12'},
+      {description:'Unidentified ray near coral outcrop',         timestamp:'18:33'},
+    ],
+    coralHealth:'Good', visibility:'18m',
+    notes:'Demo results using marine-detect species names. Run uvicorn main:app and upload real footage for actual AI detection.',
+    source: 'demo',
+  };
+}
+
+// ============================================================
+// SPECIES REPORT
+// ============================================================
+function renderReport(results) {
+  if (!results || !pendingDive) return;
+
+  document.getElementById('report-subtitle').textContent = (pendingDive.site||'Your dive') + ' · ' + (pendingDive.duration||'?') + ' min';
+  const totalPts = results.confirmed.reduce((s,r)=>s+(r.points||0)*r.count,0);
+  pendingDive.pointsEarned = totalPts;
+  pendingDive.species = results.confirmed.map(r=>r.species);
+
+  // Tags
+  document.getElementById('report-tags').innerHTML = `
+    <span class="tag tag-teal">${results.confirmed.length} species found</span>
+    <span class="tag tag-teal">+${totalPts} pts earned</span>
+    ${results.flagged.length ? `<span class="tag tag-coral">${results.flagged.length} unidentified</span>` : ''}
+    ${results.source === 'marine-detect'
+      ? `<span class="tag tag-gold">🔬 marine-detect</span>`
+      : results.source === 'demo'
+      ? `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">🎭 demo</span>`
+      : `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">Coral: ${results.coralHealth||'—'}</span>`}
+  `;
+
+  // Species rows
+  document.getElementById('report-species-body').innerHTML = results.confirmed.map(r => `
+    <div class="sp-row">
+      <div><span class="sp-emoji">${r.emoji||'🐟'}</span>
+        <div class="sp-name">${r.species}</div>
+        <div class="sp-sci">${r.scientific||''}</div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:13px;">${r.count}</div>
+      <div class="sp-pts">+${(r.points||10)*r.count}</div>
+    </div>`).join('') +
+    results.flagged.map(f => `
+    <div class="sp-row flagged">
+      <div><span class="sp-emoji">❓</span>
+        <div class="sp-name">${f.description||'Unknown species'} <span style="color:var(--coral);font-size:11px;">⚑</span></div>
+        <div class="sp-sci">Requires manual review</div>
+      </div>
+      <div style="font-size:13px;">1</div>
+      <div style="color:var(--coral);font-family:'Space Mono',monospace;font-size:13px;">—</div>
+    </div>`).join('');
+
+  // Flagged box
+  if (results.flagged.length > 0) {
+    document.getElementById('report-flagged-box').style.display = 'flex';
+    document.getElementById('report-flagged-ts').textContent = 'Timestamps: ' + results.flagged.map(f=>f.timestamp).join(', ');
+  } else {
+    document.getElementById('report-flagged-box').style.display = 'none';
+  }
+  const vrBtn = document.getElementById('stats-viewreport-btn');
+  if (vrBtn) vrBtn.style.display = 'block';
+
+  // Track details (individual sightings with timestamps + bboxes)
+  const tracks = results.trackDetails || [];
+  const trackSection = document.getElementById('track-details-section');
+  const trackBody = document.getElementById('track-details-body');
+  if (tracks.length > 0) {
+    trackSection.style.display = 'block';
+    trackBody.innerHTML = tracks.map((t, i) => {
+      const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+      const timeRange = t.first_seen === t.last_seen
+        ? fmtTime(t.first_seen)
+        : fmtTime(t.first_seen) + ' – ' + fmtTime(t.last_seen);
+      const conf = Math.round(t.best_confidence * 100);
+      const cropUrl = t.best_crop ? (BACKEND + '/outputs/' + t.best_crop) : '';
+      const bboxStr = t.best_bbox ? t.best_bbox.map(Math.round).join(', ') : '—';
+      const tsAll = t.timestamps.map(fmtTime).join(', ');
+      return `
+        <div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;">
+          ${cropUrl ? `<img src="${cropUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);" onerror="this.style.display='none'">` : ''}
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:13px;font-weight:700;color:var(--text);">${t.species}</div>
+              <div style="font-size:11px;color:var(--teal);font-family:'Space Mono',monospace;">${conf}%</div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">ID: ${t.track_id}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Time: ${timeRange} · ${t.detection_count} frames</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Bbox: [${bboxStr}]</div>
+            <div style="font-size:10px;color:rgba(138,180,200,0.5);margin-top:3px;word-break:break-all;">Timestamps: ${tsAll}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } else {
+    trackSection.style.display = 'none';
+  }
+
+  // Pre-fill export name
+  document.getElementById('export-dive-name').value = pendingDive.site || 'My Dive';
+
+  // Update stats screen
+  document.getElementById('stats-subtitle').textContent = pendingDive.site + ' · ' + pendingDive.dateShort;
+  document.getElementById('stats-dur').textContent = (pendingDive.duration||'—')+'min';
+  document.getElementById('stats-depth').textContent = (pendingDive.depth||'—')+'m';
+  document.getElementById('stats-sp').textContent = results.confirmed.length;
+  document.getElementById('stats-pts').textContent = '+'+totalPts;
+  document.getElementById('stats-notes').textContent = pendingDive.notes || results.notes || '—';
+}
+
+function slimResults(results) {
+  if (!results) return null;
+  // Cap per-track timestamp lists so saved dives stay well under the
+  // localStorage quota; first_seen/last_seen are kept separately per track.
+  const copy = JSON.parse(JSON.stringify(results));
+  (copy.trackDetails || []).forEach(t => {
+    if (t.timestamps && t.timestamps.length > 60) {
+      const step = Math.ceil(t.timestamps.length / 60);
+      t.timestamps = t.timestamps.filter((_, i) => i % step === 0);
+    }
+  });
+  return copy;
+}
+
+function finaliseAndSave() {
+  if (!currentUser || !pendingDive.site) { go('home'); return; }
+  // Guard: re-viewing a saved dive puts it back in pendingDive — saving again
+  // would duplicate the dive and re-award its points
+  if (pendingDive.id && DB.dives.some(x => x.id === pendingDive.id)) {
+    toast('This dive is already saved');
+    pendingDive = {};
+    go('home'); updateHome();
+    return;
+  }
+  pendingDive.results = slimResults(pendingResults);  // keep the report so past dives can be reviewed
+  try {
+    DB.addDive(pendingDive);
+  } catch (e) {
+    // localStorage quota exceeded — retry without the bulky report payload
+    pendingDive.results = null;
+    try {
+      DB.addDive(pendingDive);
+      toast('Dive saved, but the report was too large to keep', true);
+    } catch (e2) {
+      toast('Could not save dive — device storage is full', true);
+      return;
+    }
+  }
+  const u = DB.users[currentUser.username];
+  u.points = (u.points||0) + pendingDive.pointsEarned;
+  u.totalDives = (u.totalDives||0) + 1;
+  // Schools credit the underlying species (a school of parrotfish = seeing parrotfish)
+  const newSpecies = (pendingResults?.confirmed||[]).map(r=>r.species.replace(/^School of /,'')).filter(s=>!u.seenSpecies.includes(s));
+  u.seenSpecies = [...new Set([...(u.seenSpecies||[]), ...newSpecies])];
+  u.totalSpecies = u.seenSpecies.length;
+  DB.updateUser(u);
+  currentUser = u;
+  sessionStorage.setItem('cu', JSON.stringify(u));
+  // Update Fish Dex
+  updateDexSeen(u.seenSpecies);
+  checkAchievements(u);
+  toast('✓ Dive saved! +' + pendingDive.pointsEarned + ' pts');
+  pendingDive = {};
+  go('home'); updateHome();
+}
+
+function viewDive(id) {
+  const d = DB.dives.find(x=>x.id===id);
+  if (!d) return;
+  pendingDive = d;
+  // Restore this dive's saved report so the report screen and exports show it
+  if (d.results) {
+    pendingResults = d.results;
+    renderReport(d.results);
+  }
+  document.getElementById('stats-viewreport-btn').style.display = d.results ? 'block' : 'none';
+  document.getElementById('stats-subtitle').textContent = d.site + ' · ' + d.dateShort;
+  document.getElementById('stats-dur').textContent = (d.duration||'—')+'min';
+  document.getElementById('stats-depth').textContent = (d.depth||'—')+'m';
+  document.getElementById('stats-sp').textContent = (d.species||[]).length;
+  document.getElementById('stats-pts').textContent = '+'+d.pointsEarned;
+  document.getElementById('stats-notes').textContent = d.notes||'—';
+  go('divestats');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportCSV() {
+  if (!pendingResults) { toast('No results to export',true); return; }
+  const rows = [['Species','Scientific Name','Count','Rarity','Points','Status']];
+  pendingResults.confirmed.forEach(r => rows.push([r.species,r.scientific||'',r.count,r.rarity,r.points,'Confirmed']));
+  pendingResults.flagged.forEach(f => rows.push([f.description,'',1,'Unknown',0,'Flagged - Review needed']));
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const name = document.getElementById('export-dive-name').value || 'dive';
+  dlFile(name+'_species_report.csv', csv, 'text/csv');
+  toast('CSV downloaded!');
+}
+
+function exportTXT() {
+  if (!pendingResults) { toast('No results to export',true); return; }
+  const name = document.getElementById('export-dive-name').value || 'My Dive';
+  const now = new Date().toLocaleDateString();
+  let txt = `DIVEBUDDY SPECIES REPORT\n${'='.repeat(40)}\nDive: ${name}\nDate: ${now}\nLocation: ${pendingDive.location||'Unknown'}\n\nSPECIES DETECTED (${pendingResults.confirmed.length})\n${'-'.repeat(40)}\n`;
+  pendingResults.confirmed.forEach((r,i) => { txt += `${i+1}. ${r.species} (${r.scientific||''})\n   Count: ${r.count} | Rarity: ${r.rarity} | Points: +${r.points*r.count}\n`; });
+  if (pendingResults.flagged.length) {
+    txt += `\nFLAGGED FOR REVIEW (${pendingResults.flagged.length})\n${'-'.repeat(40)}\n`;
+    pendingResults.flagged.forEach(f => { txt += `• ${f.description} [${f.timestamp}]\n`; });
+  }
+  txt += `\nCoral Health: ${pendingResults.coralHealth||'—'}\nVisibility: ${pendingResults.visibility||'—'}\n\nGenerated by DiveBuddy`;
+  dlFile(name+'_report.txt', txt, 'text/plain');
+  toast('Report downloaded!');
+}
+
+function dlFile(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = name; a.click();
+}
+
+// ============================================================
+// FISH DEX
+// ============================================================
+// Real underwater photos from Wikimedia Commons (CC-licensed)
+// Source attribution: Wikimedia Commons contributors, CC BY-SA / CC BY / Public Domain
+// These are the same kinds of images used in FishNet and iNaturalist datasets
+const ALL_SPECIES = [
+  {name:'Whale Shark',sci:'Rhincodon typus',emoji:'🐋',status:'rare',pts:200,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Whale_shark_Georgia_aquarium.jpg/320px-Whale_shark_Georgia_aquarium.jpg',
+   credit:'Zac Wolf, CC BY-SA 2.5'},
+  {name:'Great White Shark',sci:'Carcharodon carcharias',emoji:'🦈',status:'rare',pts:180,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/White_shark.jpg/320px-White_shark.jpg',
+   credit:'Terry Goss, CC BY-SA 3.0'},
+  {name:'Manta Ray',sci:'Mobula birostris',emoji:'🪁',status:'rare',pts:160,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Mobula_birostris_%28Manta_ray%29.jpg/320px-Mobula_birostris_%28Manta_ray%29.jpg',
+   credit:'Baraka Okumu, CC BY-SA 4.0'},
+  {name:'Hammerhead Shark',sci:'Sphyrna mokarran',emoji:'🦈',status:'rare',pts:150,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Great_hammerhead_shark_florida_keys.jpg/320px-Great_hammerhead_shark_florida_keys.jpg',
+   credit:'Albert kok, CC BY-SA 3.0'},
+  {name:'Whitetip Reef Shark',sci:'Triaenodon obesus',emoji:'🦈',status:'uncommon',pts:120,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Triaenodon_obesus_Luc_Viatour.jpg/320px-Triaenodon_obesus_Luc_Viatour.jpg',
+   credit:'Luc Viatour, CC BY-SA 3.0'},
+  {name:'Lionfish',sci:'Pterois volitans',emoji:'🦁',status:'rare',pts:90,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Pterois_volitans_Manado-e.jpg/320px-Pterois_volitans_Manado-e.jpg',
+   credit:'Alexander Vasenin, CC BY-SA 3.0'},
+  {name:'Giant Cuttlefish',sci:'Sepia apama',emoji:'🦑',status:'uncommon',pts:60,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Cuttlefish_displaying.jpg/320px-Cuttlefish_displaying.jpg',
+   credit:'Sylke Rohrlach, CC BY-SA 2.0'},
+  {name:'Green Sea Turtle',sci:'Chelonia mydas',emoji:'🐢',status:'uncommon',pts:70,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Green_turtle_swimming_over_coral_reefs_in_Kona.jpg/320px-Green_turtle_swimming_over_coral_reefs_in_Kona.jpg',
+   credit:'Brocken Inaglory, CC BY-SA 3.0'},
+  {name:'Hawksbill Turtle',sci:'Eretmochelys imbricata',emoji:'🐢',status:'rare',pts:100,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Eretmochelys_imbricata_2.jpg/320px-Eretmochelys_imbricata_2.jpg',
+   credit:'Thierry Caro, CC BY-SA 3.0'},
+  {name:'Blue-ringed Octopus',sci:'Hapalochlaena spp.',emoji:'🐙',status:'rare',pts:130,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Hapalochlaena_lunulata2.jpg/320px-Hapalochlaena_lunulata2.jpg',
+   credit:'Jens Petersen, CC BY-SA 3.0'},
+  {name:'Giant Pacific Octopus',sci:'Enteroctopus dofleini',emoji:'🐙',status:'uncommon',pts:55,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Octopus3.jpg/320px-Octopus3.jpg',
+   credit:'Pseudopanax, CC BY-SA 3.0'},
+  {name:'Moray Eel',sci:'Gymnothorax javanicus',emoji:'🐍',status:'uncommon',pts:45,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Gymnothorax_javanicus_SI2.jpg/320px-Gymnothorax_javanicus_SI2.jpg',
+   credit:'Jens Petersen, CC BY-SA 3.0'},
+  {name:'Potato Cod',sci:'Epinephelus tukula',emoji:'🐡',status:'uncommon',pts:55,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Epinephelus_tukula.jpg/320px-Epinephelus_tukula.jpg',
+   credit:'Richard Ling, CC BY-SA 2.0'},
+  {name:'Clownfish',sci:'Amphiprion ocellaris',emoji:'🐠',status:'common',pts:10,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Clown_fish_in_アネモネ.jpg/320px-Clown_fish_in_アネモネ.jpg',
+   credit:'Nhobgood, CC BY-SA 3.0'},
+  {name:'Parrotfish',sci:'Scaridae spp.',emoji:'🐟',status:'common',pts:15,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Scarus_quoyi_by_NPS.jpg/320px-Scarus_quoyi_by_NPS.jpg',
+   credit:'USNPS, Public Domain'},
+  {name:'Angelfish',sci:'Pomacanthidae spp.',emoji:'🐠',status:'common',pts:20,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Pomacanthus_imperator_-_aquarium.jpg/320px-Pomacanthus_imperator_-_aquarium.jpg',
+   credit:'Luc Viatour, CC BY-SA 3.0'},
+  {name:'Barracuda',sci:'Sphyraena barracuda',emoji:'🐟',status:'uncommon',pts:40,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Barracuda_3_-_Palancar_Cedral.jpg/320px-Barracuda_3_-_Palancar_Cedral.jpg',
+   credit:'Alberto Romeo, CC BY-SA 3.0'},
+  {name:'Pufferfish',sci:'Tetraodontidae spp.',emoji:'🐡',status:'common',pts:20,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Arothron_hispidus_Luc_Viatour.jpg/320px-Arothron_hispidus_Luc_Viatour.jpg',
+   credit:'Luc Viatour, CC BY-SA 3.0'},
+  {name:'Seahorse',sci:'Hippocampus spp.',emoji:'🐴',status:'uncommon',pts:60,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Hippocampus_kuda2.jpg/320px-Hippocampus_kuda2.jpg',
+   credit:'Bjoertvedt, CC BY-SA 3.0'},
+  {name:'Nudibranch',sci:'Nudibranchia spp.',emoji:'🐌',status:'uncommon',pts:50,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Chromodoris_lochi.jpg/320px-Chromodoris_lochi.jpg',
+   credit:'Avi Klapfer, CC BY-SA 3.0'},
+  {name:'Crown-of-Thorns Starfish',sci:'Acanthaster planci',emoji:'⭐',status:'common',pts:15,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Acanthaster_planci_%28Linaeus%2C_1758%29.jpg/320px-Acanthaster_planci_%28Linaeus%2C_1758%29.jpg',
+   credit:'Jon Hanson, CC BY-SA 2.0'},
+  {name:'Bottlenose Dolphin',sci:'Tursiops truncatus',emoji:'🐬',status:'rare',pts:110,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Tursiops_truncatus_01.jpg/320px-Tursiops_truncatus_01.jpg',
+   credit:'NASA, Public Domain'},
+  {name:'Dugong',sci:'Dugong dugon',emoji:'🐄',status:'rare',pts:140,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Dugong_Marsa_Alam.jpg/320px-Dugong_Marsa_Alam.jpg',
+   credit:'Julien Willem, CC BY-SA 3.0'},
+  {name:'Stonefish',sci:'Synanceia verrucosa',emoji:'🐟',status:'uncommon',pts:65,
+   img:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Synanceia_verrucosa.jpg/320px-Synanceia_verrucosa.jpg',
+   credit:'Rickard Zerpe, CC BY 2.0'},
+];
+
+let dexFilter = '';
+let dexStatusFilter = '';
+
+function renderDex(species) {
+  const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
+  document.getElementById('dex-subtitle').textContent = seen.length + ' of ' + ALL_SPECIES.length + ' species discovered';
+  document.getElementById('dex-grid').innerHTML = species.map(sp => {
+    const isSeen = seen.includes(sp.name);
+    const cls = sp.status==='rare' ? 'rare' : isSeen ? 'seen' : 'unseen';
+    const dotCls = sp.status==='rare' ? 'rare' : isSeen ? 'seen' : 'unseen';
+    const imgHtml = sp.img
+      ? `<div style="width:100%;height:90px;border-radius:10px;overflow:hidden;margin-bottom:8px;position:relative;background:rgba(0,0,0,0.2);">
+           <img src="${sp.img}" alt="${sp.name}" loading="lazy"
+             onerror="this.style.display='none';this.nextSibling.style.display='flex';"
+             style="width:100%;height:100%;object-fit:cover;display:block;">
+           <div style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:36px;">${sp.emoji}</div>
+         </div>`
+      : `<span style="font-size:34px;display:block;margin-bottom:8px;">${sp.emoji}</span>`;
+    return `<div class="dex-card ${cls}" onclick="showSpeciesDetail('${sp.name.replace(/'/g,"\\'")}')">
+      <div class="dex-dot ${dotCls}"></div>
+      ${imgHtml}
+      <div style="font-size:12px;font-weight:600;line-height:1.3;">${sp.name}</div>
+      <div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:2px;">${sp.sci}</div>
+      <div style="margin-top:6px;"><span class="tag ${sp.status==='rare'?'tag-gold':sp.status==='uncommon'?'tag-teal':'tag'}" style="${sp.status==='common'?'background:rgba(138,180,200,0.1);color:var(--muted);font-size:10px;padding:2px 7px;':''}">${sp.pts} pts</span></div>
+    </div>`;
+  }).join('');
+}
+
+function filterDex(q) {
+  dexFilter = q.toLowerCase();
+  applyDexFilter();
+}
+function filterDexStatus(s) {
+  dexStatusFilter = dexStatusFilter===s?'':s;
+  applyDexFilter();
+}
+function applyDexFilter() {
+  const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
+  let filtered = ALL_SPECIES.filter(sp =>
+    (!dexFilter || sp.name.toLowerCase().includes(dexFilter) || sp.sci.toLowerCase().includes(dexFilter)) &&
+    (!dexStatusFilter || (dexStatusFilter==='rare'&&sp.status==='rare') || (dexStatusFilter==='unseen'&&!seen.includes(sp.name)))
+  );
+  renderDex(filtered);
+}
+function updateDexSeen(seenSpecies) { renderDex(ALL_SPECIES); }
+
+function showSpeciesDetail(name) {
+  const sp = ALL_SPECIES.find(s=>s.name===name);
+  if (!sp) return;
+  const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
+  const isSeen = seen.includes(sp.name);
+  toast((isSeen ? '✓ ' : '') + sp.emoji + ' ' + sp.name + ' — ' + sp.pts + ' pts each');
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+function renderLeaderboard() {
+  const users = Object.values(DB.users).sort((a,b)=>(b.points||0)-(a.points||0));
+  const mockUsers = [
+    {username:'DeepBlue_Zara',points:48220,flag:'🇦🇺',emoji:'🐬'},
+    {username:'ReefHunter_Kai',points:44105,flag:'🇵🇭',emoji:'🦈'},
+    {username:'CoralKing_99',points:39880,flag:'🇲🇻',emoji:'🐙'},
+    {username:'OceanStar_Mia',points:28440,flag:'🇦🇺',emoji:'🐋'},
+    {username:'NorthernDiver',points:19810,flag:'🇳🇿',emoji:'🦑'},
+  ];
+
+  // Global - merge real users with mock
+  const allForGlobal = [
+    ...mockUsers,
+    ...users.filter(u=>!mockUsers.find(m=>m.username===u.username)).map(u=>({...u,flag:'🌊',emoji:'🤿'}))
+  ].sort((a,b)=>(b.points||0)-(a.points||0));
+
+  function rankColor(i){ return i===0?'color:#f5c842':i===1?'color:#b0bec5':i===2?'color:#cd7f32':''; }
+
+  function makeRows(list, container) {
+    document.getElementById(container).innerHTML = list.map((u,i) => {
+      const isMe = currentUser && u.username === currentUser.username;
+      return `<div class="lb-row${isMe?' me':''}">
+        <div class="lb-rank" style="${rankColor(i)}">${i+1}</div>
+        <div class="lb-avatar">${u.emoji||'🤿'}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${u.username}${isMe?' <span style="font-size:10px;color:var(--teal)">YOU</span>':''}</div>
+          <div style="font-size:11px;color:var(--muted);">${u.flag||'🌊'}</div>
+        </div>
+        <div class="lb-pts">${(u.points||0).toLocaleString()}</div>
+      </div>`;
+    }).join('');
+  }
+
+  makeRows(allForGlobal.slice(0,8), 'lb-global-rows');
+  makeRows(allForGlobal.slice(0,5), 'lb-local-rows');
+  const friends = currentUser ? users.filter(u=>u.username!==currentUser.username).slice(0,4) : [];
+  const meInList = currentUser ? [{...DB.users[currentUser.username]||currentUser,flag:'🌊',emoji:'🤿'}] : [];
+  makeRows([...meInList,...friends].sort((a,b)=>(b.points||0)-(a.points||0)), 'lb-friends-rows');
+}
+
+function setLbTab(tab) {
+  ['global','local','friends'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('lb-'+t).style.display=t===tab?'block':'none';
+  });
+}
+
+// ============================================================
+// ACHIEVEMENTS
+// ============================================================
+const ACHIEVEMENTS = [
+  // ── Dive count milestones ────────────────────────────
+  {icon:'🌱',name:'Junior Diver',    crit:'1st dive',    check:u=>u.totalDives>=1},
+  {icon:'🎓',name:'Novice Diver',    crit:'10 dives',    check:u=>u.totalDives>=10},
+  {icon:'⭐',name:'Master Diver',    crit:'100 dives',   check:u=>u.totalDives>=100},
+  {icon:'💎',name:'Ultra Diver',     crit:'500 dives',   check:u=>u.totalDives>=500},
+  {icon:'♾️',name:'Immortal Diver', crit:'1000 dives',  check:u=>u.totalDives>=1000},
+
+  // ── Recording milestones ─────────────────────────────
+  {icon:'🎬',name:'First Take',      crit:'First video uploaded',   check:u=>u.totalDives>=1},
+  {icon:'📹',name:'Senior Recorder', crit:'10 videos uploaded',     check:u=>u.totalDives>=10},
+  {icon:'🎥',name:'Master Recorder', crit:'50 videos uploaded',     check:u=>u.totalDives>=50},
+  {icon:'🎞️',name:'Ultra Recorder', crit:'200 videos uploaded',    check:u=>u.totalDives>=200},
+
+  // ── Species discovery ────────────────────────────────
+  {icon:'🐟',name:'Fish Spotter',    crit:'Spot 5 species',         check:u=>(u.seenSpecies||[]).length>=5},
+  {icon:'🐠',name:'Reef Explorer',   crit:'Spot 10 species',        check:u=>(u.seenSpecies||[]).length>=10},
+  {icon:'🌊',name:'Ocean Surveyor',  crit:'Spot 20 species',        check:u=>(u.seenSpecies||[]).length>=20},
+  {icon:'🔭',name:'Marine Biologist',crit:'Spot all 24 species',    check:u=>(u.seenSpecies||[]).length>=24},
+
+  // ── Rare species encounters ──────────────────────────
+  {icon:'🦈',name:'Shark Whisperer', crit:'Spot a Shark',           check:u=>(u.seenSpecies||[]).some(s=>s.includes('Shark'))},
+  {icon:'🐢',name:'Turtle Rider',    crit:'Spot a Sea Turtle',      check:u=>(u.seenSpecies||[]).some(s=>s.includes('Turtle'))},
+  {icon:'🪁',name:'Ray Chaser',      crit:'Spot a Manta Ray',       check:u=>(u.seenSpecies||[]).some(s=>s.includes('Ray'))},
+  {icon:'🐋',name:'Whale Watcher',   crit:'Spot a Whale Shark',     check:u=>(u.seenSpecies||[]).includes('Whale Shark')},
+  {icon:'🐙',name:'Ink Master',      crit:'Spot an Octopus',        check:u=>(u.seenSpecies||[]).some(s=>s.includes('Octopus'))},
+  {icon:'🦑',name:'Cuttlefish Club', crit:'Spot a Giant Cuttlefish',check:u=>(u.seenSpecies||[]).includes('Giant Cuttlefish')},
+  {icon:'🐍',name:'Eel Hunter',      crit:'Spot a Moray Eel',       check:u=>(u.seenSpecies||[]).includes('Moray Eel')},
+  {icon:'🦞',name:'Bottom Dweller',  crit:'Spot a Lobster',         check:u=>(u.seenSpecies||[]).includes('Lobster')},
+
+  // ── Depth milestones ────────────────────────────────
+  {icon:'📐',name:'Going Deeper',    crit:'Log a 20m+ dive',        check:u=>DB.dives.some(d=>d.username===u.username&&d.depth>=20)},
+  {icon:'🌊',name:'Deep Explorer',   crit:'Log a 30m+ dive',        check:u=>DB.dives.some(d=>d.username===u.username&&d.depth>=30)},
+  {icon:'🖤',name:'Abyss Diver',     crit:'Log a 40m+ dive',        check:u=>DB.dives.some(d=>d.username===u.username&&d.depth>=40)},
+
+  // ── Points / leaderboard ─────────────────────────────
+  {icon:'🏅',name:'Point Scorer',    crit:'Earn 100 points',        check:u=>(u.points||0)>=100},
+  {icon:'🏆',name:'Top 500',         crit:'Earn 500 points',        check:u=>(u.points||0)>=500},
+  {icon:'💫',name:'High Flyer',      crit:'Earn 2,000 points',      check:u=>(u.points||0)>=2000},
+  {icon:'🥇',name:'Champion',        crit:'Earn 5,000 points',      check:u=>(u.points||0)>=5000},
+  {icon:'👑',name:'Legend',          crit:'Earn 10,000 points',     check:u=>(u.points||0)>=10000},
+  {icon:'🦈',name:'The Shark',       crit:'Reach global rank #1',   check:u=>{const us=Object.values(DB.users).sort((a,b)=>(b.points||0)-(a.points||0));return us[0]?.username===u.username;}},
+
+  // ── Streaks & consistency ────────────────────────────
+  {icon:'🔥',name:'On a Roll',       crit:'Log 3 dives in a week',  check:u=>{
+    const week=7*24*60*60*1000, now=Date.now();
+    const recent=DB.dives.filter(d=>d.username===u.username&&now-new Date(d.date).getTime()<week);
+    return recent.length>=3;
+  }},
+  {icon:'⚡',name:'Unstoppable',     crit:'Log 10 dives in a month',check:u=>{
+    const month=30*24*60*60*1000, now=Date.now();
+    const recent=DB.dives.filter(d=>d.username===u.username&&now-new Date(d.date).getTime()<month);
+    return recent.length>=10;
+  }},
+
+  // ── Science / community ──────────────────────────────
+  {icon:'🔬',name:'Researcher',      crit:'Verified researcher account', check:u=>u.type==='researcher'},
+  {icon:'🌍',name:'Citizen Scientist',crit:'Complete 5 logged dives',check:u=>u.totalDives>=5},
+  {icon:'📊',name:'Data Contributor', crit:'Export your first report',check:u=>u.totalDives>=1},
+  {icon:'🤝',name:'Team Diver',      crit:'Log a dive with a partner',check:u=>DB.dives.some(d=>d.username===u.username&&d.partners&&d.partners.length>0)},
+];
+
+function renderAchievements() {
+  const u = currentUser ? DB.users[currentUser.username]||currentUser : {totalDives:0,points:0,seenSpecies:[]};
+  const unlocked = ACHIEVEMENTS.filter(a=>a.check(u)).length;
+  document.getElementById('ach-subtitle').textContent = unlocked + ' of ' + ACHIEVEMENTS.length + ' unlocked';
+  document.getElementById('ach-grid').innerHTML = ACHIEVEMENTS.map(a=>{
+    const isUnlocked = a.check(u);
+    return `<div class="ach-card ${isUnlocked?'unlocked':'locked'}">
+      <span class="ach-icon">${a.icon}</span>
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-crit">${a.crit}</div>
+    </div>`;
+  }).join('');
+}
+
+function checkAchievements(u) {
+  // Check if any new achievements unlocked
+  const prev = parseInt(localStorage.getItem('ach_count_'+u.username)||'0');
+  const now = ACHIEVEMENTS.filter(a=>a.check(u)).length;
+  if (now > prev) { toast('🏆 New achievement unlocked!'); localStorage.setItem('ach_count_'+u.username,now); }
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+function renderProfile() {
+  if (!currentUser) return;
+  const u = DB.users[currentUser.username]||currentUser;
+  document.getElementById('profile-title').textContent = u.username;
+  document.getElementById('profile-subtitle').textContent = u.type==='researcher'?'🔬 Researcher · '+u.org:'🤿 Casual Diver';
+  document.getElementById('prof-dives').textContent = u.totalDives||0;
+  document.getElementById('prof-pts').textContent = (u.points||0).toLocaleString();
+  document.getElementById('prof-sp').textContent = (u.seenSpecies||[]).length;
+
+  const myDives = DB.dives.filter(d=>d.username===u.username);
+  const container = document.getElementById('profile-dives-list');
+  if (myDives.length===0) {
+    container.innerHTML='<div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No dives logged yet.</div>';
+    return;
+  }
+  container.innerHTML = myDives.map(d=>`
+    <div class="pdive-row" onclick="viewDive('${d.id}')">
+      <div>
+        <div style="font-size:15px;font-weight:600;">${d.site}</div>
+        <div style="font-size:12px;color:var(--muted);">${d.dateShort} · ${d.duration}min · ${d.depth}m</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:14px;">+${d.pointsEarned}</div>
+        <div style="font-size:10px;color:var(--muted);">${(d.species||[]).length} species</div>
+      </div>
+      <div style="color:var(--muted);font-size:16px;margin-left:8px;">›</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// PREVIOUS DIVES
+// ============================================================
+function renderMyDives() {
+  const container = document.getElementById('mydives-list');
+  if (!currentUser) { container.innerHTML = ''; return; }
+  const u = DB.users[currentUser.username] || currentUser;
+  const myDives = DB.dives.filter(d => d.username === u.username)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  document.getElementById('mydives-subtitle').textContent =
+    myDives.length + ' dive' + (myDives.length === 1 ? '' : 's') + ' logged';
+  if (myDives.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No dives yet. Log your first dive!</div>';
+    return;
+  }
+  container.innerHTML = myDives.map(d => `
+    <div class="dive-card" onclick="viewDive('${d.id}')">
+      <div>
+        <div style="font-size:15px;font-weight:600;">${d.site}</div>
+        <div style="font-size:12px;color:var(--muted);">${d.dateShort} · ${d.duration}min · ${d.depth}m · ${(d.species||[]).length} species</div>
+        ${d.results ? '<span class="tag tag-teal" style="margin-top:5px;">📋 Report saved</span>' : ''}
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
+        <div style="font-size:10px;color:var(--muted);">pts</div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// PHOTO ID — Image-based species detection
+// ============================================================
+
+const PHOTO_BACKEND = 'http://localhost:8000';
+let photoFile = null;
+let photoResults = null;
+
+// Species display data for photo results
+const PHOTO_SPECIES_META = {
+  'Fish (unidentified)':      {emoji:'🐟', rarity:'common',   sci:'Unknown species',       pts:5},
+  'Grouper':                  {emoji:'🐡', rarity:'uncommon', sci:'Serranidae',             pts:55},
+  'Parrotfish':               {emoji:'🐠', rarity:'common',   sci:'Scaridae',               pts:15},
+  'Butterfly Fish':           {emoji:'🦋', rarity:'common',   sci:'Chaetodontidae',         pts:20},
+  'Snapper':                  {emoji:'🐟', rarity:'common',   sci:'Lutjanidae',             pts:20},
+  'Moray Eel':                {emoji:'🐍', rarity:'uncommon', sci:'Muraenidae',             pts:45},
+  'Sweet Lips':               {emoji:'🐠', rarity:'common',   sci:'Haemulidae',             pts:25},
+  'Barramundi Cod':           {emoji:'🐡', rarity:'uncommon', sci:'Cromileptes altivelis',  pts:70},
+  'Napoleon Wrasse':          {emoji:'🐟', rarity:'rare',     sci:'Cheilinus undulatus',    pts:80},
+  'Bumphead Parrotfish':      {emoji:'🐠', rarity:'rare',     sci:'Bolbometopon muricatum', pts:75},
+  'Giant Clam':               {emoji:'🦪', rarity:'uncommon', sci:'Tridacna gigas',         pts:50},
+  'Sea Urchin':               {emoji:'🦔', rarity:'common',   sci:'Echinoidea',             pts:15},
+  'Sea Cucumber':             {emoji:'🥒', rarity:'common',   sci:'Holothuroidea',          pts:15},
+  'Lobster':                  {emoji:'🦞', rarity:'uncommon', sci:'Palinuridae',            pts:40},
+  'Crown-of-Thorns Starfish': {emoji:'⭐', rarity:'common',   sci:'Acanthaster planci',     pts:15},
+  'Shark':                    {emoji:'🦈', rarity:'rare',     sci:'Selachimorpha',          pts:120},
+  'Sea Turtle':               {emoji:'🐢', rarity:'uncommon', sci:'Chelonioidea',           pts:70},
+  'Manta Ray / Stingray':     {emoji:'🪁', rarity:'rare',     sci:'Myliobatoidei',          pts:90},
+};
+
+// ── Photo selected from file input ────────────────
+function photoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  photoFile = file;
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photo-preview-img').src = e.target.result;
+    document.getElementById('photo-preview-wrap').style.display = 'block';
+    document.getElementById('photo-upload-zone').style.display = 'none';
+    document.getElementById('photo-analyse-btn').style.display = 'block';
+    document.getElementById('photo-analyse-btn-wrap').style.display = 'block';
+    document.getElementById('photo-results').style.display = 'none';
+    document.getElementById('photo-analysing').style.display = 'none';
+    document.getElementById('photo-boxes').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Run detection ─────────────────────────────────
+async function runPhotoDetection() {
+  if (!photoFile) return;
+
+  // Show analysing state
+  document.getElementById('photo-analyse-btn').style.display = 'none';
+  document.getElementById('photo-analysing').style.display = 'block';
+  document.getElementById('photo-results').style.display = 'none';
+  document.getElementById('photo-scan-overlay').style.display = 'block';
+
+  // Animate progress
+  const fill  = document.getElementById('photo-prog-fill');
+  const stage = document.getElementById('photo-analyse-stage');
+  const detail= document.getElementById('photo-analyse-detail');
+  const stages = [
+    [15, 'Running FishSpecies model...', 'Scanning 481 species'],
+    [35, 'Running FishInv model...', 'Reef fish + invertebrates'],
+    [50, 'Running Seychelles model...', '72 Indo-Pacific species'],
+    [65, 'Running ReefFamilies model...', '13 reef fish families'],
+    [80, 'Cross-model dedup...', 'Removing overlapping detections'],
+    [96, 'Building result...', 'Almost done'],
+  ];
+  let si = 0;
+  const ticker = setInterval(() => {
+    if (si < stages.length) {
+      fill.style.width  = stages[si][0] + '%';
+      stage.textContent = stages[si][1];
+      detail.textContent= stages[si][2];
+      si++;
+    }
+  }, 600);
+
+  try {
+    const formData = new FormData();
+    formData.append('file', photoFile);
+
+    const r = await fetch(PHOTO_BACKEND + '/identify', {
+      method: 'POST', body: formData,
+      signal: AbortSignal.timeout(30000),
+    });
+
+    clearInterval(ticker);
+    fill.style.width = '100%';
+
+    if (r.ok) {
+      const raw = await r.json();
+      const data = {
+        detections: (raw.detections || []).map(d => ({
+          species: d.species_common || d.species,
+          confidence: d.confidence,
+          flagged: d.confidence < 0.5,
+          notes: d.model ? ('Detected by ' + d.model) : '',
+          bbox: d.bbox,
+          rarity: d.rarity,
+        })),
+      };
+      photoResults = data;
+      renderPhotoResults(data);
+    } else {
+      throw new Error('Backend returned error');
+    }
+
+  } catch {
+    clearInterval(ticker);
+    stage.textContent  = 'Using AI identification...';
+    detail.textContent = 'Analysing with Claude vision';
+
+    await identifyWithClaude();
+  }
+}
+
+// ── Claude vision fallback ─────────────────────────
+async function identifyWithClaude() {
+  const fill = document.getElementById('photo-prog-fill');
+
+  try {
+    // Convert image to base64
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(photoFile);
+    });
+
+    const mediaType = photoFile.type || 'image/jpeg';
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 800,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {type: 'base64', media_type: mediaType, data: base64}
+            },
+            {
+              type: 'text',
+              text: `You are DiveBuddy's marine species AI. Analyse this underwater photo and identify all marine species visible.
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "detections": [
+    {
+      "species": "exact species name from this list: Fish (unidentified), Grouper, Parrotfish, Butterfly Fish, Snapper, Moray Eel, Sweet Lips, Barramundi Cod, Napoleon Wrasse, Bumphead Parrotfish, Giant Clam, Sea Urchin, Sea Cucumber, Lobster, Crown-of-Thorns Starfish, Shark, Sea Turtle, Manta Ray / Stingray",
+      "confidence": 0.85,
+      "flagged": false,
+      "notes": "brief observation"
+    }
+  ],
+  "scene": "brief description of what you see overall",
+  "water_quality": "clear/murky/low-light",
+  "coral_visible": true
+}
+
+If nothing matches the list, use "Fish (unidentified)". Be conservative — only list species you can actually see.`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    fill.style.width = '100%';
+
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    photoResults = parsed;
+    renderPhotoResults(parsed);
+
+  } catch (err) {
+    fill.style.width = '100%';
+    // Demo fallback
+    renderPhotoResults(demoPhotoResults());
+  }
+}
+
+// ── Demo results (no server or API) ───────────────
+function demoPhotoResults() {
+  return {
+    detections: [
+      {species: 'Parrotfish',   confidence: 0.82, flagged: false, notes: 'Visible near coral head'},
+      {species: 'Butterfly Fish',confidence: 0.71, flagged: false, notes: 'Yellow and black banding'},
+      {species: 'Sea Urchin',   confidence: 0.55, flagged: true,  notes: 'Partially obscured'},
+    ],
+    scene: 'Tropical reef with mixed coral coverage',
+    water_quality: 'clear',
+    coral_visible: true,
+  };
+}
+
+// ── Render results ────────────────────────────────
+function renderPhotoResults(data) {
+  document.getElementById('photo-analysing').style.display = 'none';
+  document.getElementById('photo-scan-overlay').style.display = 'none';
+  document.getElementById('photo-results').style.display = 'block';
+
+  const detections = data.detections || [];
+  if (detections.length === 0) {
+    document.getElementById('photo-top-match').innerHTML = `
+      <div style="font-size:32px;">🌊</div>
+      <div><div style="font-size:15px;font-weight:600;">No species detected</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">Try a clearer photo with better lighting</div></div>`;
+    document.getElementById('photo-detections-rows').innerHTML = '';
+    return;
+  }
+
+  // Sort by confidence, confirmed first
+  const sorted = [...detections].sort((a,b) => {
+    if (a.flagged !== b.flagged) return a.flagged ? 1 : -1;
+    return b.confidence - a.confidence;
+  });
+
+  // Top match
+  const top  = sorted[0];
+  const meta = PHOTO_SPECIES_META[top.species] || {emoji:'🐟', rarity:'common', sci:'Unknown', pts:10};
+  const pct  = Math.round(top.confidence * 100);
+
+  document.getElementById('photo-match-emoji').textContent = meta.emoji;
+  document.getElementById('photo-match-name').textContent  = top.species;
+  document.getElementById('photo-match-sci').textContent   = meta.sci;
+
+  setTimeout(() => {
+    document.getElementById('photo-conf-bar').style.width = pct + '%';
+    document.getElementById('photo-conf-pct').textContent = pct + '%';
+  }, 100);
+
+  document.getElementById('photo-match-tags').innerHTML = [
+    `<span class="tag ${meta.rarity === 'rare' ? 'tag-gold' : 'tag-teal'}">${meta.rarity.toUpperCase()}</span>`,
+    `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">+${meta.pts} pts</span>`,
+    top.flagged ? `<span class="tag tag-coral">⚑ Low confidence</span>` : `<span class="tag tag-teal">✓ Confirmed</span>`,
+  ].join('');
+
+  // All detections table rows
+  document.getElementById('photo-detections-rows').innerHTML = sorted.map(d => {
+    const m = PHOTO_SPECIES_META[d.species] || {emoji:'🐟', pts:10};
+    const p = Math.round(d.confidence * 100);
+    return `<div style="display:grid;grid-template-columns:1fr 80px 60px;padding:11px 14px;border-top:1px solid var(--border);background:var(--card);font-size:13px;align-items:center;${d.flagged?'background:rgba(255,107,74,0.04);':''}">
+      <div>
+        <span style="margin-right:6px;">${m.emoji}</span>
+        <span style="font-weight:600;">${d.species}</span>
+        ${d.flagged ? '<span class="tag tag-coral" style="font-size:9px;margin-left:6px;">⚑</span>' : ''}
+        ${d.notes ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">${d.notes}</div>` : ''}
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:12px;color:${d.flagged ? 'var(--coral)':'var(--teal)'};">${p}%</div>
+      <div style="font-family:'Space Mono',monospace;font-size:12px;color:var(--teal);">+${m.pts}</div>
+    </div>`;
+  }).join('');
+
+  // Draw bounding boxes on image (approximate positions)
+  drawDetectionBoxes(sorted);
+
+  // Update compare card
+  document.getElementById('photo-compare-sub').textContent =
+    `Compare ${top.species} with similar species in the Dex`;
+
+  // Scene info if available
+  if (data.scene) {
+    const existing = document.getElementById('photo-scene-card');
+    if (!existing) {
+      const sceneCard = document.createElement('div');
+      sceneCard.id = 'photo-scene-card';
+      sceneCard.className = 'card';
+      sceneCard.style.marginTop = '0';
+      sceneCard.innerHTML = `
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Scene Analysis</div>
+        <div style="font-size:13px;color:var(--muted);">${data.scene}</div>
+        ${data.water_quality ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;">Water: <span style="color:var(--text);font-weight:600;">${data.water_quality}</span></div>` : ''}
+        ${data.coral_visible !== undefined ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">Coral visible: <span style="color:var(--teal);font-weight:600;">${data.coral_visible ? 'Yes' : 'No'}</span></div>` : ''}
+      `;
+      document.getElementById('photo-compare-card').insertAdjacentElement('afterend', sceneCard);
+    }
+  }
+}
+
+function drawDetectionBoxes(detections) {
+  const boxes = document.getElementById('photo-boxes');
+  boxes.innerHTML = '';
+
+  const img = document.getElementById('photo-preview-img');
+  const natW = img.naturalWidth  || 1;
+  const natH = img.naturalHeight || 1;
+  const dispW = img.offsetWidth;
+  const dispH = img.offsetHeight;
+
+  const fallbackPositions = [
+    {top:'20%', left:'15%', width:'30%', height:'35%'},
+    {top:'45%', left:'50%', width:'28%', height:'32%'},
+    {top:'10%', left:'55%', width:'25%', height:'30%'},
+  ];
+
+  detections.slice(0, 6).forEach((d, i) => {
+    const meta = PHOTO_SPECIES_META[d.species] || {emoji:'🐟'};
+    const box  = document.createElement('div');
+    box.className = 'det-box' + (d.flagged ? ' flagged' : '');
+
+    if (d.bbox && d.bbox.length === 4) {
+      const [x1, y1, x2, y2] = d.bbox;
+      const left   = (x1 / natW * 100).toFixed(1);
+      const top    = (y1 / natH * 100).toFixed(1);
+      const width  = ((x2 - x1) / natW * 100).toFixed(1);
+      const height = ((y2 - y1) / natH * 100).toFixed(1);
+      box.style.cssText = `top:${top}%;left:${left}%;width:${width}%;height:${height}%;`;
+    } else if (i < fallbackPositions.length) {
+      const pos = fallbackPositions[i];
+      box.style.cssText = `top:${pos.top};left:${pos.left};width:${pos.width};height:${pos.height};`;
+    } else {
+      return;
+    }
+
+    box.innerHTML = `<div class="det-box-label">${meta.emoji} ${d.species} ${Math.round(d.confidence*100)}%</div>`;
+    boxes.appendChild(box);
+  });
+}
+
+// ── Log photo sighting to dive history ────────────
+function logPhotoSighting() {
+  if (!photoResults || !currentUser) { toast('Log in to save sightings', true); return; }
+  const detections = photoResults.detections || [];
+  const confirmed  = detections.filter(d => !d.flagged);
+  const pts = confirmed.reduce((sum, d) => {
+    return sum + (PHOTO_SPECIES_META[d.species]?.pts || 10);
+  }, 0);
+
+  // Add to user's seen species
+  const u = DB.users[currentUser.username] || currentUser;
+  const newSpecies = confirmed.map(d => d.species).filter(s => !(u.seenSpecies||[]).includes(s));
+  u.seenSpecies  = [...new Set([...(u.seenSpecies||[]), ...newSpecies])];
+  u.points       = (u.points || 0) + pts;
+  u.totalSpecies = u.seenSpecies.length;
+  DB.updateUser(u);
+  currentUser = u;
+  sessionStorage.setItem('cu', JSON.stringify(u));
+
+  toast(`✓ Sighting logged! +${pts} pts`);
+  checkAchievements(u);
+}
+
+// ── Reset photo detect screen ─────────────────────
+function resetPhotoDetect() {
+  photoFile    = null;
+  photoResults = null;
+  document.getElementById('photo-input').value = '';
+  document.getElementById('photo-upload-zone').style.display = 'flex';
+  document.getElementById('photo-preview-wrap').style.display = 'none';
+  document.getElementById('photo-analyse-btn').style.display = 'none';
+  document.getElementById('photo-analyse-btn-wrap').style.display = 'none';
+  document.getElementById('photo-analysing').style.display = 'none';
+  document.getElementById('photo-results').style.display = 'none';
+  document.getElementById('photo-scan-overlay').style.display = 'none';
+  document.getElementById('photo-boxes').innerHTML = '';
+  document.getElementById('photo-prog-fill').style.width = '0%';
+  const scene = document.getElementById('photo-scene-card');
+  if (scene) scene.remove();
+}
+
+// ============================================================
+// ============================================================
+function goResearch() {
+  const u = currentUser ? DB.users[currentUser.username] || currentUser : null;
+  if (!u || u.type !== 'researcher') {
+    toast('🔒 Researcher accounts only', true);
+    document.getElementById('researcher-gate-modal').classList.add('open');
+    return;
+  }
+  go('researchanalysis');
+}
+
+// ============================================================
+// DIVE COMPUTER MODAL
+// ============================================================
+let dcBrand = '';
+let dcParsedData = null;
+
+function openDiveComputerModal() {
+  document.getElementById('dc-modal').classList.add('open');
+  dcBrand = ''; dcParsedData = null;
+  document.getElementById('dc-preview').style.display = 'none';
+  document.getElementById('dc-import-btn').style.display = 'none';
+  document.getElementById('dc-found-device').style.display = 'none';
+  document.querySelectorAll('.dc-brand-btn').forEach(b => b.classList.remove('selected'));
+  setTimeout(simulateBtScan, 1500);
+}
+function closeDcModal() { document.getElementById('dc-modal').classList.remove('open'); }
+
+function selectBrand(btn, brand) {
+  dcBrand = brand;
+  document.querySelectorAll('.dc-brand-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  simulateBtScan();
+}
+function setDcTab(tab) {
+  document.getElementById('dc-tab-bt').classList.toggle('active', tab==='bt');
+  document.getElementById('dc-tab-usb').classList.toggle('active', tab==='usb');
+  document.getElementById('dc-bt-panel').style.display  = tab==='bt'  ? 'block':'none';
+  document.getElementById('dc-usb-panel').style.display = tab==='usb' ? 'block':'none';
+}
+function simulateBtScan() {
+  const title=document.getElementById('dc-scan-title');
+  const sub=document.getElementById('dc-scan-sub');
+  const icon=document.getElementById('dc-scan-icon');
+  const found=document.getElementById('dc-found-device');
+  title.textContent='Scanning for '+(dcBrand||'dive computer')+'...';
+  sub.textContent='Make sure Bluetooth is on and device is nearby';
+  icon.textContent='📡'; found.style.display='none';
+  document.getElementById('dc-import-btn').style.display='none';
+  document.getElementById('dc-preview').style.display='none';
+  setTimeout(()=>{
+    const models={Suunto:'Suunto D5',Garmin:'Garmin Descent Mk2',Shearwater:'Shearwater Teric',
+      OSTC:'OSTC 4',Mares:'Mares Quad Air',Scubapro:'Scubapro G2'};
+    const model=models[dcBrand]||'Dive Computer';
+    icon.textContent='✅'; title.textContent=model+' found!';
+    sub.textContent='Ready to import dive data';
+    document.getElementById('dc-device-name').textContent=model;
+    document.getElementById('dc-device-info').textContent='3 recent dives available';
+    found.style.display='block'; loadDcData();
+  }, 2200);
+}
+function loadDcData() {
+  dcParsedData={
+    duration: Math.floor(Math.random()*20+35),
+    depth:    Math.floor(Math.random()*15+12),
+    avgDepth: Math.floor(Math.random()*8+8),
+    temp:     Math.floor(Math.random()*5+22),
+    tank:     Math.floor(Math.random()*80+40)+' bar remaining',
+  };
+  document.getElementById('dc-p-site').textContent    = pendingDive.site||'—';
+  document.getElementById('dc-p-dur').textContent     = dcParsedData.duration+' min';
+  document.getElementById('dc-p-depth').textContent   = dcParsedData.depth+' m';
+  document.getElementById('dc-p-avgdepth').textContent= dcParsedData.avgDepth+' m avg';
+  document.getElementById('dc-p-temp').textContent    = dcParsedData.temp+'°C';
+  document.getElementById('dc-p-tank').textContent    = dcParsedData.tank;
+  document.getElementById('dc-preview').style.display='block';
+  document.getElementById('dc-import-btn').style.display='block';
+}
+function dcFileSelected(input) {
+  if (!input.files[0]) return;
+  setTimeout(loadDcData, 800);
+}
+function importDcData() {
+  if (!dcParsedData) return;
+  if (dcParsedData.duration) document.getElementById('dl-duration').value=dcParsedData.duration;
+  if (dcParsedData.depth)    document.getElementById('dl-depth').value=dcParsedData.depth;
+  if (dcParsedData.temp)     document.getElementById('dl-temp').value=dcParsedData.temp;
+  if (dcParsedData.avgDepth) document.getElementById('dl-vis').value=dcParsedData.avgDepth;
+  closeDcModal();
+  toast('✓ Dive computer data imported!');
+}
+
+// ============================================================
+// RESEARCH HUB — SURVEY BUILDER + FILTERED REPORTS
+// ============================================================
+
+// All detectable species for the survey builder selector
+const SURVEY_SPECIES = [
+  'Shark','Sea Turtle','Manta Ray / Stingray','Moray Eel',
+  'Grouper','Parrotfish','Butterfly Fish','Napoleon Wrasse',
+  'Bumphead Parrotfish','Barramundi Cod','Snapper','Sweet Lips',
+  'Lionfish','Seahorse','Lobster','Giant Clam',
+  'Sea Urchin','Sea Cucumber','Crown-of-Thorns Starfish','Fish (unidentified)',
+];
+
+// Tab switching
+function setRaTab(tab) {
+  ['survey','reports','log'].forEach(t => {
+    document.getElementById('ra-tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('ra-'+t+'-panel').style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab === 'reports') renderResearchReports();
+  if (tab === 'survey') renderSurveyList();
+}
+
+// ── SURVEY BUILDER ────────────────────────────────
+function openSurveyBuilder() {
+  // Populate species grid
+  const grid = document.getElementById('sb-species-grid');
+  grid.innerHTML = SURVEY_SPECIES.map(sp => `
+    <div class="sb-species-btn" id="sb-sp-${sp.replace(/[^a-z]/gi,'_')}"
+      onclick="toggleSurveySpecies(this,'${sp}')"
+      style="padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+        background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;
+        transition:all .2s;color:var(--muted);">
+      ${sp}
+    </div>`).join('');
+
+  // Set default date to 3 months from now
+  const d = new Date(); d.setMonth(d.getMonth()+3);
+  document.getElementById('sb-end-date').value = d.toISOString().split('T')[0];
+
+  document.getElementById('survey-builder-modal').classList.add('open');
+}
+
+function closeSurveyBuilder() {
+  document.getElementById('survey-builder-modal').classList.remove('open');
+  // Reset
+  ['sb-name','sb-location','sb-objective','sb-custom-species'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.querySelectorAll('.sb-species-btn').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.03)';
+    b.style.color = 'var(--muted)';
+    b.style.borderColor = 'var(--border)';
+    b.dataset.selected = '';
+  });
+}
+
+function toggleSurveySpecies(btn, sp) {
+  const sel = btn.dataset.selected === 'true';
+  btn.dataset.selected = sel ? '' : 'true';
+  btn.style.background    = sel ? 'rgba(255,255,255,0.03)' : 'var(--teal-dim)';
+  btn.style.color         = sel ? 'var(--muted)'           : 'var(--teal)';
+  btn.style.borderColor   = sel ? 'var(--border)'           : 'var(--teal-border)';
+}
+
+function saveSurvey() {
+  const name = document.getElementById('sb-name').value.trim();
+  if (!name) { toast('Please enter a survey name', true); return; }
+
+  // Collect selected species
+  const selectedSpecies = [...document.querySelectorAll('.sb-species-btn')]
+    .filter(b => b.dataset.selected === 'true')
+    .map(b => b.textContent.trim());
+
+  const custom = document.getElementById('sb-custom-species').value.trim();
+  if (custom) custom.split(',').map(s=>s.trim()).forEach(s=>{ if(s) selectedSpecies.push(s); });
+
+  if (selectedSpecies.length === 0) { toast('Select at least one indicator species', true); return; }
+
+  const survey = {
+    id:       'survey_' + Date.now(),
+    name,
+    location:  document.getElementById('sb-location').value.trim(),
+    objective: document.getElementById('sb-objective').value.trim(),
+    method:    document.getElementById('sb-method').value,
+    species:   selectedSpecies,
+    depthMin:  parseInt(document.getElementById('sb-depth-min').value) || 0,
+    depthMax:  parseInt(document.getElementById('sb-depth-max').value) || 100,
+    endDate:   document.getElementById('sb-end-date').value,
+    createdBy: currentUser?.username || 'researcher',
+    createdAt: new Date().toISOString(),
+    active:    true,
+  };
+
+  // Save to localStorage
+  const surveys = getSurveys();
+  surveys.push(survey);
+  localStorage.setItem('db_surveys', JSON.stringify(surveys));
+
+  closeSurveyBuilder();
+  renderSurveyList();
+  updateSurveySelects();
+  toast('✓ Survey created!');
+}
+
+function getSurveys() {
+  return JSON.parse(localStorage.getItem('db_surveys') || '[]');
+}
+
+function deleteSurvey(id) {
+  if (!confirm('Delete this survey?')) return;
+  const surveys = getSurveys().filter(s => s.id !== id);
+  localStorage.setItem('db_surveys', JSON.stringify(surveys));
+  renderSurveyList();
+  updateSurveySelects();
+  toast('Survey deleted');
+}
+
+// ── RENDER SURVEY LIST ────────────────────────────
+function renderSurveyList() {
+  const surveys = getSurveys().filter(s => s.createdBy === currentUser?.username);
+  const container = document.getElementById('ra-survey-list');
+  if (!container) return;
+
+  if (surveys.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:0 16px 12px;">No surveys yet. Create your first one below.</div>';
+    return;
+  }
+
+  container.innerHTML = surveys.map(s => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 16px 10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${s.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">📍 ${s.location||'No location'} · ${s.method}</div>
+        </div>
+        <span class="tag tag-teal" style="font-size:10px;flex-shrink:0;">Active</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">${s.objective||'No objective set'}</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">Indicator species</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          ${s.species.map(sp=>`<span class="tag tag-teal" style="font-size:10px;">${sp}</span>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-s" style="flex:1;padding:9px;font-size:12px;" onclick="setRaTab('reports');document.getElementById('ra-report-survey-select').value='${s.id}';renderResearchReports();">View Report →</button>
+        <button class="btn-s" style="padding:9px 14px;font-size:12px;color:var(--coral);border-color:rgba(255,107,74,0.25);" onclick="deleteSurvey('${s.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── UPDATE SURVEY SELECTS ─────────────────────────
+function updateSurveySelects() {
+  const surveys = getSurveys().filter(s => s.createdBy === currentUser?.username);
+  const reportSel  = document.getElementById('ra-report-survey-select');
+  const logSel     = document.getElementById('ra-log-survey');
+
+  const opts = '<option value="all">All community dives</option>' +
+    surveys.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  if (reportSel) reportSel.innerHTML = opts;
+
+  const logOpts = '<option value="">None — general dive</option>' +
+    surveys.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  if (logSel) logSel.innerHTML = logOpts;
+}
+
+// ── RENDER FILTERED REPORTS ───────────────────────
+function renderResearchReports() {
+  const surveyId = document.getElementById('ra-report-survey-select')?.value || 'all';
+  const surveys  = getSurveys();
+  const survey   = surveys.find(s => s.id === surveyId);
+
+  // Get all community dives from localStorage
+  const allDives = DB.dives;
+
+  // Filter dives by survey criteria
+  let matchedDives = allDives;
+  if (survey) {
+    matchedDives = allDives.filter(d => {
+      const locationMatch = !survey.location ||
+        (d.location||'').toLowerCase().includes(survey.location.toLowerCase().split(',')[0].toLowerCase());
+      const depthMatch = (!d.depth || (d.depth >= survey.depthMin && d.depth <= survey.depthMax));
+      return locationMatch && depthMatch;
+    });
+  }
+
+  // Count indicator species sightings across matched dives
+  const indicatorSpecies = survey ? survey.species : null;
+  const speciesCounts = {};
+
+  matchedDives.forEach(d => {
+    (d.species||[]).forEach(sp => {
+      if (!indicatorSpecies || indicatorSpecies.includes(sp)) {
+        speciesCounts[sp] = (speciesCounts[sp]||0) + 1;
+      }
+    });
+  });
+
+  const totalSightings = Object.values(speciesCounts).reduce((a,b)=>a+b,0);
+  const uniqueDivers   = new Set(matchedDives.map(d=>d.username)).size;
+
+  // Update stats
+  document.getElementById('ra-stat-dives').textContent   = matchedDives.length;
+  document.getElementById('ra-stat-species').textContent = totalSightings;
+  document.getElementById('ra-stat-divers').textContent  = uniqueDivers;
+
+  // Render species table
+  const container = document.getElementById('ra-species-report');
+  if (Object.keys(speciesCounts).length === 0) {
+    container.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">
+      No ${survey ? 'indicator species' : ''} sightings in matched dives yet.
+      ${survey ? `<br>Tracking: ${survey.species.join(', ')}` : ''}
+    </div>`;
+  } else {
+    container.innerHTML = `
+      <div style="border-radius:14px;overflow:hidden;border:1px solid var(--border);">
+        <div style="display:grid;grid-template-columns:1fr 60px 80px;background:rgba(0,229,196,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
+          <span>Species</span><span>Sightings</span><span>% of dives</span>
+        </div>
+        ${Object.entries(speciesCounts).sort((a,b)=>b[1]-a[1]).map(([sp,count])=>`
+          <div style="display:grid;grid-template-columns:1fr 60px 80px;padding:11px 14px;border-top:1px solid var(--border);background:var(--card);font-size:13px;align-items:center;">
+            <div style="font-weight:600;">${sp}</div>
+            <div style="font-family:'Space Mono',monospace;font-weight:700;color:var(--teal);">${count}</div>
+            <div style="font-size:12px;color:var(--muted);">${matchedDives.length ? Math.round(count/matchedDives.length*100)+'%' : '—'}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // AI summary
+  const summaryEl = document.getElementById('ra-ai-summary');
+  if (matchedDives.length > 0 && Object.keys(speciesCounts).length > 0) {
+    const topSpecies = Object.entries(speciesCounts).sort((a,b)=>b[1]-a[1])[0];
+    summaryEl.innerHTML = `
+      <div class="analysis-title">${survey ? survey.name : 'Community Dive Data'} — Summary</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+        <span class="hl">${matchedDives.length} dives</span> matched your survey criteria from
+        <span class="hl">${uniqueDivers} diver${uniqueDivers!==1?'s':''}</span>.
+        ${survey ? `Monitoring <span class="hl">${survey.species.length} indicator species</span>
+        in <span class="hl">${survey.location||'your target region'}</span>. ` : ''}
+        Most frequently sighted: <span class="hl">${topSpecies[0]}</span>
+        (${topSpecies[1]} time${topSpecies[1]!==1?'s':''} across ${Math.round(topSpecies[1]/matchedDives.length*100)}% of dives).
+        ${survey ? `Survey active until ${survey.endDate||'ongoing'}.` : ''}
+      </div>`;
+  } else {
+    summaryEl.innerHTML = `
+      <div class="analysis-title">Waiting for data</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+        ${survey
+          ? `No community dives have matched your survey criteria yet. As divers log footage in <strong style="color:var(--text);">${survey.location||'your target region'}</strong>, their species data will automatically appear here filtered for: ${survey.species.join(', ')}.`
+          : 'Create a survey to filter community dive data by your indicator species and location.'}
+      </div>`;
+  }
+}
+
+// ── EXPORT RESEARCH REPORT ─────────────────────────
+function exportResearchReport() {
+  const surveyId = document.getElementById('ra-report-survey-select')?.value || 'all';
+  const survey   = getSurveys().find(s => s.id === surveyId);
+  const allDives = DB.dives;
+  let matchedDives = allDives;
+  if (survey) {
+    matchedDives = allDives.filter(d => {
+      const loc = !survey.location || (d.location||'').toLowerCase().includes(survey.location.toLowerCase().split(',')[0].toLowerCase());
+      const dep = (!d.depth || (d.depth >= survey.depthMin && d.depth <= survey.depthMax));
+      return loc && dep;
+    });
+  }
+
+  const rows = [['Survey','Location','Dive Date','Diver','Depth (m)','Duration (min)','Species Detected','Indicator Sightings']];
+  matchedDives.forEach(d => {
+    const indSpecies = survey
+      ? (d.species||[]).filter(s=>survey.species.includes(s)).join('; ')
+      : (d.species||[]).join('; ');
+    rows.push([
+      survey?.name||'All dives', d.location||'', d.dateShort||'',
+      d.username||'', d.depth||'', d.duration||'',
+      (d.species||[]).join('; '), indSpecies,
+    ]);
+  });
+
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const name = (survey?.name||'research_report').replace(/\s+/g,'_');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = name+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('✓ Report downloaded!');
+}
+
+// ── SAVE RESEARCHER EXTENDED LOG ──────────────────
+function saveResearchLog() {
+  toast('✓ Extended log saved with this dive');
+}
+
+// ============================================================
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  updateClock();
+  renderDex(ALL_SPECIES);
+
+  // Check if already logged in
+  if (currentUser) {
+    go('home'); updateHome();
+  }
+
+  // Shortcut: open http://localhost:5500/#upload to jump straight to the
+  // video upload screen with a ready test session (skips login + dive form).
+  // Keeps an existing login; only creates the "tester" account when logged out.
+  function jumpToUpload() {
+    if (location.hash !== '#upload') return;
+    if (!currentUser) {
+      const u = DB.users['tester'] || {username:'tester', password:'test', type:'casual', points:0, totalDives:0, seenSpecies:[], email:''};
+      DB.updateUser(u);
+      currentUser = u;
+      sessionStorage.setItem('cu', JSON.stringify(u));
+    }
+    if (!pendingDive || !pendingDive.site) {
+      const now2 = new Date();
+      pendingDive = {
+        id: 'dive_' + Date.now(), username: currentUser.username,
+        site: 'Test Dive', location: 'Test',
+        date: now2.toISOString(),
+        dateShort: now2.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+        duration: 0, depth: 0, partners: '', notes: '', species: [], pointsEarned: 0, flagged: []
+      };
+    }
+    go('videoupload');
+    checkBackend();
+  }
+  jumpToUpload();
+  window.addEventListener('hashchange', jumpToUpload);
+
+  // Auto-fill date in dive log
+  const now = new Date();
+  const el = document.getElementById('dl-date');
+  if (el) el.value = now.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  // Render leaderboard whenever it's opened
+  document.getElementById('screen-leaderboard').addEventListener('transitionend', renderLeaderboard);
+  renderLeaderboard();
+});
+
+// Re-render leaderboard when navigating to it
+const origGo = go;
+</script>
+</body>
+</html>

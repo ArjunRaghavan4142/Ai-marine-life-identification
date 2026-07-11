@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+backend/app/models/*.pt
+backend/uploads/
+backend/outputs/
+_extracted/
+divebuddy.zip
+datasets/roboflow/
+datasets/fishnet/
+datasets/lila/

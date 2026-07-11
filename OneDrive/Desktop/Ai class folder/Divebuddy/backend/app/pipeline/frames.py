@@ -5,7 +5,7 @@ import cv2
 def extract_frames(
     video_path: pathlib.Path,
     out_dir: pathlib.Path,
-    fps_sample: float = 1.0
+    fps_sample: float = 2.0
 ) -> dict:
     """
     Extracts frames at `fps_sample` frames/sec and writes them as JPEGs.

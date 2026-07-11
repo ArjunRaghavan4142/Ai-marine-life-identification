@@ -874,5 +874,9 @@
   "wetmorella_nigropinnata": "common",
   "xiphocheilus_typus": "common",
   "zenarchopterus_dispar": "common",
-  "zeus_faber": "common"
+  "zeus_faber": "common",
+  "eel": "uncommon",
+  "starfish": "common",
+  "crab": "uncommon",
+  "jellyfish": "uncommon"
 }

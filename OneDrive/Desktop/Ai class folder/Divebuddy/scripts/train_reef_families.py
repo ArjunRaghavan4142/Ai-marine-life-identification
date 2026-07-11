@@ -14,14 +14,12 @@ DATA = pathlib.Path(__file__).resolve().parent.parent / "datasets" / "reef_famil
 
 
 def main():
-    weights = pathlib.Path("C:/Users/arjun/runs/detect/runs/reef_families/train/weights/last.pt")
-    model = YOLO(str(weights))
+    model = YOLO("yolov8s.pt")
 
     model.train(
         data=str(DATA),
         epochs=120,
-        patience=0,
-        resume=True,
+        patience=20,
         batch=16,
         imgsz=640,
         device=0,

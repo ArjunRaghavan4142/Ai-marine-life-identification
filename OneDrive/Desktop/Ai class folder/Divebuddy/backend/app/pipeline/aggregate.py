@@ -396,6 +396,11 @@ COMMON_NAMES: dict[str, str] = {
     "Zanclus canescens": "Moorish Idol",
     "Zebrasoma desjardinii": "Desjardin's Sailfin Tang",
     "Zebrasoma scopas": "Brown Tang",
+    # MarineLife model classes (filtered to reef-relevant)
+    "eel": "Eel",
+    "starfish": "Starfish",
+    "crab": "Crab",
+    "jellyfish": "Jellyfish",
     # ReefFamilies model classes (13 families)
     "Acanthuridae -Surgeonfishes-": "Surgeonfish",
     "Balistidae -Triggerfishes-": "Triggerfish",
@@ -896,7 +901,11 @@ COMMON_NAMES: dict[str, str] = {
 
 
 def common_name(model_name: str) -> str:
-    return COMMON_NAMES.get(model_name, model_name)
+    if model_name in COMMON_NAMES:
+        return COMMON_NAMES[model_name]
+    if "_" in model_name:
+        return model_name.replace("_", " ").title()
+    return model_name
 
 
 def _iou(a: list, b: list) -> float:
@@ -939,7 +948,12 @@ def _dedup_cross_model(detections: list[dict], iou_thresh: float = 0.45) -> list
             if bbox_a is None or bbox_b is None:
                 continue
             if _iou(bbox_a, bbox_b) >= iou_thresh:
-                loser = ib if a["confidence"] >= b["confidence"] else ia
+                spec_a = a.get("specificity", 0)
+                spec_b = b.get("specificity", 0)
+                if spec_a != spec_b:
+                    loser = ib if spec_a > spec_b else ia
+                else:
+                    loser = ib if a["confidence"] >= b["confidence"] else ia
                 keep.discard(loser)
 
     return [detections[i] for i in sorted(keep)]
@@ -1051,7 +1065,35 @@ def _dedup_tracks_spatially(
     return dict(groups)
 
 
-MIN_ACCEPTED_DETECTIONS = 3
+MIN_ACCEPTED_DETECTIONS = 5
+SCHOOL_THRESHOLD = 5
+
+# Nothing below this confidence is written to the report as an identification --
+# weaker tracks land in the review queue instead, regardless of the per-model
+# accept threshold (which can be as low as 0.75).
+MIN_WRITE_CONF = 0.85
+
+
+def _detect_schools(tracks: dict[str, list[dict]], track_majority: dict[str, str]) -> set[str]:
+    """Species with SCHOOL_THRESHOLD+ simultaneous tracks on any single frame.
+
+    Tracks are keyed by their majority species -- the same label
+    aggregate_tracks routes with -- so a species can never be flagged as a
+    school that no track actually resolves to (which would make the school
+    silently disappear from the report).
+    """
+    frame_species: dict[int, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+    for track_id, dets in tracks.items():
+        species = track_majority[track_id]
+        for d in dets:
+            frame_species[d["frame_index"]][species].add(track_id)
+
+    schools = set()
+    for species_tracks in frame_species.values():
+        for species, tids in species_tracks.items():
+            if len(tids) >= SCHOOL_THRESHOLD:
+                schools.add(species)
+    return schools
 
 
 def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict:
@@ -1064,13 +1106,30 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
     tracks = _dedup_tracks_spatially(raw_tracks)
     tracks = _merge_fragmented_tracks(tracks)
 
+    # One majority label per track, used consistently for school detection and
+    # school routing below so the two can never disagree.
+    track_majority = {
+        tid: Counter(d["species"] for d in dets).most_common(1)[0][0]
+        for tid, dets in tracks.items()
+    }
+    school_species = _detect_schools(tracks, track_majority)
+
     species_counts: Counter = Counter()
     species_conf_sum: dict[str, float] = defaultdict(float)
     species_conf_n: dict[str, int] = defaultdict(int)
     review_queue: list[dict] = []
+    accepted_tracks: list[tuple[str, str, list[dict]]] = []
+    # A schooling species is reported as one school, not per fish -- pool every
+    # member track's detections and summarise them once below.
+    school_groups: dict[str, list[dict]] = defaultdict(list)
 
     for track_id, track_detections in tracks.items():
-        accept_conf = track_detections[0]["accept_conf"]
+        track_species = track_majority[track_id]
+        if track_species in school_species:
+            school_groups[track_species].extend(track_detections)
+            continue
+
+        accept_conf = max(track_detections[0]["accept_conf"], MIN_WRITE_CONF)
         accepted = [d for d in track_detections if d["confidence"] >= accept_conf]
 
         if len(accepted) >= MIN_ACCEPTED_DETECTIONS:
@@ -1079,6 +1138,7 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
             species_counts[species] += 1
             species_conf_sum[species] += avg_conf
             species_conf_n[species] += 1
+            accepted_tracks.append((track_id, species, accepted))
         else:
             best = max(track_detections, key=lambda d: d["confidence"])
             review_queue.append({
@@ -1089,18 +1149,81 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
                 "crop_path": best["crop_path"],
             })
 
-    species_summary = [
-        {
+    species_summary = []
+    for species, count in species_counts.most_common():
+        species_summary.append({
             "species": common_name(species),
             "unique_count": count,
             "avg_confidence": round(species_conf_sum[species] / species_conf_n[species], 3),
             "rarity": rarity_map.get(species, "unknown"),
-        }
-        for species, count in species_counts.most_common()
-    ]
+            "is_school": False,
+        })
+
+    # Individual sightings are built from the accepted (>= MIN_WRITE_CONF)
+    # detections only, and reuse the exact species label the summary counted --
+    # sub-threshold detections are never written to the report.
+    track_details = []
+    for track_id, species, accepted in accepted_tracks:
+        best = max(accepted, key=lambda d: d["confidence"])
+        timestamps = sorted({d["timestamp_sec"] for d in accepted})
+        track_details.append({
+            "track_id": track_id,
+            "species": common_name(species),
+            "detection_count": len(accepted),
+            "best_confidence": round(best["confidence"], 3),
+            "best_bbox": best.get("bbox"),
+            "best_crop": best.get("crop_path"),
+            "first_seen": min(timestamps),
+            "last_seen": max(timestamps),
+            "timestamps": timestamps,
+        })
+
+    for species, dets in school_groups.items():
+        # Prefer detections that both clear the floor and carry the school's
+        # own label; fall back to any confident detection from member tracks.
+        confident = [d for d in dets if d["confidence"] >= MIN_WRITE_CONF and d["species"] == species]
+        if not confident:
+            confident = [d for d in dets if d["confidence"] >= MIN_WRITE_CONF]
+        if not confident:
+            best = max(dets, key=lambda d: d["confidence"])
+            review_queue.append({
+                "track_id": f"school_{species}",
+                "species_guess": f"School of {common_name(species)}",
+                "max_confidence": round(best["confidence"], 3),
+                "timestamp_sec": best["timestamp_sec"],
+                "crop_path": best["crop_path"],
+            })
+            continue
+        best = max(confident, key=lambda d: d["confidence"])
+        avg_conf = sum(d["confidence"] for d in confident) / len(confident)
+        species_summary.append({
+            "species": f"School of {common_name(species)}",
+            "unique_count": 1,
+            "avg_confidence": round(avg_conf, 3),
+            "rarity": rarity_map.get(species, "unknown"),
+            "is_school": True,
+        })
+        timestamps = sorted({d["timestamp_sec"] for d in confident})
+        track_details.append({
+            "track_id": f"school_{species}",
+            "species": f"School of {common_name(species)}",
+            "detection_count": len(confident),
+            "best_confidence": round(best["confidence"], 3),
+            "best_bbox": best.get("bbox"),
+            "best_crop": best.get("crop_path"),
+            "first_seen": min(timestamps),
+            "last_seen": max(timestamps),
+            "timestamps": timestamps,
+        })
 
     for item in review_queue:
         item["species_guess"] = common_name(item["species_guess"])
 
     review_queue.sort(key=lambda r: r["timestamp_sec"])
-    return {"species_summary": species_summary, "review_queue": review_queue}
+    track_details.sort(key=lambda t: t["first_seen"])
+
+    return {
+        "species_summary": species_summary,
+        "review_queue": review_queue,
+        "track_details": track_details,
+    }

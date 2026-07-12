@@ -624,7 +624,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   <div class="page-header">
     <div class="back-link" onclick="go('divelog')">← Back</div>
     <div class="page-title">Upload Dive Video</div>
-    <div class="page-subtitle">7-model YOLO pipeline scans your footage</div>
+    <div class="page-subtitle">10-model YOLO pipeline scans your footage</div>
   </div>
   <div class="scroll-area">
 
@@ -642,6 +642,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <span class="tag tag-teal" style="font-size:10px;">ReefFamilies</span>
       <span class="tag tag-teal" style="font-size:10px;">MarineLife</span>
       <span class="tag tag-teal" style="font-size:10px;">MegaFauna (3)</span>
+      <span class="tag tag-teal" style="font-size:10px;">Lionfish</span>
+      <span class="tag tag-teal" style="font-size:10px;">Corals (19)</span>
+      <span class="tag tag-teal" style="font-size:10px;">MultiClass (4)</span>
     </div>
 
     <!-- Region selector -->
@@ -1523,14 +1526,18 @@ async function startAIAnalysis() {
 
   const stages = [
     [5,  'Uploading video to server...'],
-    [15, 'Extracting frames...'],
-    [30, 'Running FishSpecies model (481 species)...'],
-    [42, 'Running FishInv model...'],
-    [54, 'Running Seychelles model (72 species)...'],
-    [66, 'Running ReefFamilies model...'],
-    [78, 'Tracking unique animals across frames...'],
-    [88, 'Removing duplicate detections...'],
-    [95, 'Building species report...'],
+    [12, 'Extracting frames...'],
+    [22, 'Running FishSpecies model (481 species)...'],
+    [32, 'Running FishInv model...'],
+    [42, 'Running Seychelles model (72 species)...'],
+    [50, 'Running ReefFamilies model...'],
+    [58, 'Running MegaFauna model...'],
+    [65, 'Running Lionfish detector...'],
+    [72, 'Running Corals model (19 genera)...'],
+    [78, 'Running MultiClass model...'],
+    [85, 'Tracking unique animals across frames...'],
+    [92, 'Removing duplicate detections...'],
+    [97, 'Building species report...'],
   ];
   let si = 0;
   const ticker = setInterval(() => {
@@ -1639,7 +1646,7 @@ function convertBackendResults(backendResults) {
     trackDetails,
     coralHealth: '—',
     visibility:  '—',
-    notes: `Detected by DiveBuddy (7-model YOLO pipeline). ${confirmed.length} species confirmed, ${flagged.length} flagged for review.`,
+    notes: `Detected by DiveBuddy (10-model YOLO pipeline). ${confirmed.length} species confirmed, ${flagged.length} flagged for review.`,
     source: 'marine-detect',
   };
 }
@@ -2299,12 +2306,16 @@ async function runPhotoDetection() {
   const stage = document.getElementById('photo-analyse-stage');
   const detail= document.getElementById('photo-analyse-detail');
   const stages = [
-    [15, 'Running FishSpecies model...', 'Scanning 481 species'],
-    [35, 'Running FishInv model...', 'Reef fish + invertebrates'],
-    [50, 'Running Seychelles model...', '72 Indo-Pacific species'],
-    [65, 'Running ReefFamilies model...', '13 reef fish families'],
-    [80, 'Cross-model dedup...', 'Removing overlapping detections'],
-    [96, 'Building result...', 'Almost done'],
+    [10, 'Running FishSpecies model...', 'Scanning 481 species'],
+    [22, 'Running FishInv model...', 'Reef fish + invertebrates'],
+    [34, 'Running Seychelles model...', '72 Indo-Pacific species'],
+    [44, 'Running ReefFamilies model...', '13 reef fish families'],
+    [54, 'Running MegaFauna model...', 'Sharks, rays, turtles'],
+    [64, 'Running Lionfish detector...', 'Scanning for lionfish'],
+    [74, 'Running Corals model...', '19 coral genera'],
+    [82, 'Running MultiClass model...', 'Tang, clownfish, damselfish'],
+    [90, 'Cross-model dedup...', 'Removing overlapping detections'],
+    [97, 'Building result...', 'Almost done'],
   ];
   let si = 0;
   const ticker = setInterval(() => {
@@ -3123,7 +3134,7 @@ function _localChatReply(msg) {
     return "No schools detected. Schools are flagged when 5+ of the same species appear in one frame.";
   }
   if (m.includes('how') && (m.includes('work') || m.includes('pipeline') || m.includes('model'))) {
-    return "DiveBuddy uses 7 YOLO models:\n  1. FishSpecies — 481 species\n  2. Seychelles — 72 species (Indo-Pacific)\n  3. FishInv — 15 classes (families + named species)\n  4. ReefFamilies — 13 reef fish families\n  5. MarineLife — eels, crabs, starfish, jellyfish, shells\n  6. MegaFauna — sharks, rays, sea turtles\n  7. YOLOv8n — diver filter\n\nBoT-SORT tracker deduplicates across frames. 85%+ confidence = auto-counted; below that = review queue.";
+    return "DiveBuddy uses 10 YOLO models:\n  1. FishSpecies — 481 species\n  2. Seychelles — 72 species (Indo-Pacific)\n  3. FishInv — 15 classes (families + invertebrates)\n  4. ReefFamilies — 13 reef fish families\n  5. MarineLife — eels, crabs, starfish, jellyfish, shells\n  6. MegaFauna — sharks, rays, sea turtles\n  7. Lionfish — dedicated lionfish detector\n  8. Corals — 19 coral genera\n  9. MultiClass — Blue Tang, Clownfish, Damselfish, Yellow Tang\n  + YOLOv8n diver filter\n\nBoT-SORT tracker deduplicates across frames. 85%+ confidence = auto-counted; below that = review queue.";
   }
   if (m.includes('count') || m.includes('how many') || m.includes('total')) {
     const total = c.reduce((s, x) => s + x.count, 0);

@@ -40,6 +40,9 @@ MODEL_CONFIGS = [
      "class_filter": {"eel", "starfish", "crab", "jellyfish", "shells"}},
     {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.55, "review_conf": 0.25, "specificity": 3,
      "skip_generic_downgrade": True},
+    {"name": "Lionfish", "weights": "lionfish.pt", "accept_conf": 0.65, "review_conf": 0.25, "specificity": 4},
+    {"name": "Corals", "weights": "corals.pt", "accept_conf": 0.70, "review_conf": 0.30, "specificity": 3},
+    {"name": "MultiClass", "weights": "multiclass-wts.pt", "accept_conf": 0.75, "review_conf": 0.25, "specificity": 4},
 ]
 
 JUNK_CLASS_PATTERN = re.compile(r'^[A-Z0-9]{4,}-[A-Z0-9]')
@@ -215,9 +218,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
     for config in MODEL_CONFIGS:
         weights_path = MODELS_DIR / config["weights"]
         if not weights_path.exists():
-            raise FileNotFoundError(
-                f"Missing model weights: {weights_path}. Run scripts/download_models.py first."
-            )
+            continue
         model = YOLO(str(weights_path))
         class_filter = config.get("class_filter")
 

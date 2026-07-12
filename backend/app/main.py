@@ -355,13 +355,17 @@ def _smart_reply(msg: str, result: dict, video_name: str) -> str:
 
     if any(w in msg_lower for w in ["how", "pipeline", "model", "detect", "work", "yolo", "confidence"]):
         return (
-            "DiveBuddy uses a 6-model YOLO detection pipeline:\n"
+            "DiveBuddy uses a 10-model YOLO detection pipeline:\n"
             "  1. FishSpecies — 481 species\n"
-            "  2. FishInv — 15 classes (fish families + 3 named species)\n"
+            "  2. FishInv — 15 classes (fish families + invertebrates)\n"
             "  3. Seychelles — 72 species (best for Indo-Pacific)\n"
             "  4. ReefFamilies — 13 reef fish families\n"
             "  5. MarineLife — jellyfish, crabs, starfish, eels, shells\n"
-            "  6. MegaFauna — sharks, rays, sea turtles\n\n"
+            "  6. MegaFauna — sharks, rays, sea turtles\n"
+            "  7. Lionfish — dedicated lionfish detector\n"
+            "  8. Corals — 19 coral genera (Acropora, Pocillopora, Porites, etc.)\n"
+            "  9. MultiClass — Blue Tang, Clownfish, Damselfish, Yellow Tang\n"
+            "  + YOLOv8n diver filter (removes false positives from divers)\n\n"
             "Each model runs on every frame. A tracker (BoT-SORT) follows the same fish across frames "
             "so it counts once, not once per frame. Detections above 85% confidence are auto-counted; "
             "below that goes to the review queue. Cross-model dedup ensures the same fish isn't double-counted "

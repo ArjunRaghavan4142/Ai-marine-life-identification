@@ -61,6 +61,37 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .inp-label{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
 .divider{height:1px;background:var(--border);margin:8px 0;}
 .back-link{color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+
+/* ======= REGION SELECTOR ======= */
+.region-bar{display:flex;align-items:center;gap:8px;padding:0 16px 10px;}
+.region-select{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e5c4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;}
+.region-select option{background:var(--mid);color:var(--text);}
+
+/* ======= CHATBOT FAB + MODAL ======= */
+.chat-fab{position:absolute;bottom:88px;right:16px;width:52px;height:52px;border-radius:50%;
+  background:var(--teal);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,229,196,0.4);z-index:99;transition:all .2s;font-size:24px;}
+.chat-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,229,196,0.5);}
+.chat-modal{position:absolute;bottom:0;left:0;right:0;top:0;background:var(--bg);z-index:200;
+  display:none;flex-direction:column;animation:fadeIn .2s ease;}
+.chat-modal.open{display:flex;}
+.chat-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none;}
+.chat-messages::-webkit-scrollbar{display:none;}
+.chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;}
+.chat-bubble.user{align-self:flex-end;background:var(--teal);color:var(--bg);border-bottom-right-radius:4px;}
+.chat-bubble.bot{align-self:flex-start;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
+.chat-input-row{display:flex;gap:8px;padding:12px 16px 24px;border-top:1px solid var(--border);flex-shrink:0;}
+.chat-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;}
+.chat-input:focus{border-color:var(--teal);}
+.chat-send{background:var(--teal);border:none;border-radius:12px;padding:10px 16px;cursor:pointer;
+  color:var(--bg);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;}
 .section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:4px 24px 8px;}
 .alert{border-radius:12px;padding:11px 14px;font-size:13px;margin:0 0 10px;}
 .alert-ok{background:rgba(0,229,196,0.08);border:1px solid rgba(0,229,196,0.25);color:var(--teal);}
@@ -346,6 +377,24 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       </div>
     </div>
 
+    <!-- Region selector -->
+    <div class="region-bar">
+      <span style="font-size:18px;">📍</span>
+      <select class="region-select" id="region-select" onchange="setRegion(this.value)">
+        <option value="global">All Regions</option>
+        <option value="gbr">Great Barrier Reef, Australia</option>
+        <option value="indopacific">Indo-Pacific</option>
+        <option value="seychelles">Seychelles / Indian Ocean</option>
+        <option value="caribbean">Caribbean</option>
+        <option value="redsea">Red Sea</option>
+        <option value="mediterranean">Mediterranean</option>
+        <option value="southeast-asia">Southeast Asia</option>
+        <option value="hawaii">Hawaii / Central Pacific</option>
+        <option value="maldives">Maldives</option>
+        <option value="galápagos">Galápagos</option>
+      </select>
+    </div>
+
     <!-- Log new dive CTA -->
     <button class="new-dive-btn" onclick="go('divelog')">
       <div>
@@ -575,7 +624,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   <div class="page-header">
     <div class="back-link" onclick="go('divelog')">← Back</div>
     <div class="page-title">Upload Dive Video</div>
-    <div class="page-subtitle">6-model YOLO pipeline scans your footage</div>
+    <div class="page-subtitle">7-model YOLO pipeline scans your footage</div>
   </div>
   <div class="scroll-area">
 
@@ -592,6 +641,25 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <span class="tag tag-teal" style="font-size:10px;">FishInv (15)</span>
       <span class="tag tag-teal" style="font-size:10px;">ReefFamilies</span>
       <span class="tag tag-teal" style="font-size:10px;">MarineLife</span>
+      <span class="tag tag-teal" style="font-size:10px;">MegaFauna (3)</span>
+    </div>
+
+    <!-- Region selector -->
+    <div class="region-bar">
+      <span style="font-size:18px;">📍</span>
+      <select class="region-select" id="region-select-upload" onchange="setRegion(this.value)">
+        <option value="global">All Regions</option>
+        <option value="gbr">Great Barrier Reef, Australia</option>
+        <option value="indopacific">Indo-Pacific</option>
+        <option value="seychelles">Seychelles / Indian Ocean</option>
+        <option value="caribbean">Caribbean</option>
+        <option value="redsea">Red Sea</option>
+        <option value="mediterranean">Mediterranean</option>
+        <option value="southeast-asia">Southeast Asia</option>
+        <option value="hawaii">Hawaii / Central Pacific</option>
+        <option value="maldives">Maldives</option>
+        <option value="galápagos">Galápagos</option>
+      </select>
     </div>
 
     <input type="file" id="vid-input" accept="video/*" style="display:none;" onchange="videoFileSelected(this)">
@@ -670,6 +738,27 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     <div style="padding:12px 16px 4px;">
       <button class="btn-p" onclick="finaliseAndSave()">✓ Save dive & finish</button>
       <button class="btn-s" style="margin-top:8px;" onclick="go('divestats')">View full dive stats →</button>
+    </div>
+  </div>
+
+  <!-- Chatbot FAB -->
+  <button class="chat-fab" onclick="openChat()" title="Ask DiveBuddy AI">🤖</button>
+
+  <!-- Chatbot Modal -->
+  <div class="chat-modal" id="chat-modal">
+    <div class="chat-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;">🤖 DiveBuddy AI</div>
+        <div style="font-size:11px;color:var(--muted);">Ask about your dive results</div>
+      </div>
+      <button style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 8px;" onclick="closeChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-bubble bot">Hey! I'm DiveBuddy's AI assistant. Ask me about your dive results — what was found, rare species, how the detection works, or anything about your analysis.</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chat-input" placeholder="Ask about your dive..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">Send</button>
     </div>
   </div>
 </div>
@@ -1486,6 +1575,7 @@ async function startAIAnalysis() {
 
     const results = convertBackendResults(resultsData);
     results.jobId = jobId;
+    chatJobId = jobId;
     pendingResults = results;
 
     const n = results.confirmed.length;
@@ -1549,7 +1639,7 @@ function convertBackendResults(backendResults) {
     trackDetails,
     coralHealth: '—',
     visibility:  '—',
-    notes: `Detected by DiveBuddy (6-model YOLO pipeline). ${confirmed.length} species confirmed, ${flagged.length} flagged for review.`,
+    notes: `Detected by DiveBuddy (7-model YOLO pipeline). ${confirmed.length} species confirmed, ${flagged.length} flagged for review.`,
     source: 'marine-detect',
   };
 }
@@ -2948,6 +3038,105 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('screen-leaderboard').addEventListener('transitionend', renderLeaderboard);
   renderLeaderboard();
 });
+
+// ============================================================
+// REGION SELECTOR
+// ============================================================
+let selectedRegion = localStorage.getItem('divebuddy_region') || 'global';
+function setRegion(r) {
+  selectedRegion = r;
+  localStorage.setItem('divebuddy_region', r);
+  document.querySelectorAll('#region-select, #region-select-upload').forEach(s => s.value = r);
+}
+(function initRegion() {
+  document.querySelectorAll('#region-select, #region-select-upload').forEach(s => s.value = selectedRegion);
+})();
+
+// ============================================================
+// AI CHATBOT
+// ============================================================
+let chatJobId = null;
+
+function openChat() {
+  document.getElementById('chat-modal').classList.add('open');
+  document.getElementById('chat-input').focus();
+  if (pendingResults && pendingResults.jobId) chatJobId = pendingResults.jobId;
+}
+function closeChat() {
+  document.getElementById('chat-modal').classList.remove('open');
+}
+
+function appendChatBubble(text, who) {
+  const el = document.createElement('div');
+  el.className = 'chat-bubble ' + who;
+  el.textContent = text;
+  const box = document.getElementById('chat-messages');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  appendChatBubble(msg, 'user');
+
+  if (!pendingResults && !chatJobId) {
+    appendChatBubble("I need a completed analysis to answer questions about. Run a video analysis first, then ask me!", 'bot');
+    return;
+  }
+
+  if (chatJobId) {
+    try {
+      const resp = await fetch(BACKEND + '/jobs/' + chatJobId + '/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg})
+      });
+      if (!resp.ok) throw new Error('Chat request failed');
+      const data = await resp.json();
+      appendChatBubble(data.reply, 'bot');
+      return;
+    } catch (e) { /* fall through to local reply */ }
+  }
+  appendChatBubble(_localChatReply(msg), 'bot');
+}
+
+function _localChatReply(msg) {
+  const m = msg.toLowerCase();
+  if (!pendingResults) return "No analysis results available yet. Upload and analyse a dive video first!";
+  const c = pendingResults.confirmed || [];
+  const f = pendingResults.flagged || [];
+  if (m.includes('what') && (m.includes('find') || m.includes('found') || m.includes('see') || m.includes('summary'))) {
+    if (!c.length) return `No species confidently identified. ${f.length} detection(s) flagged for review.`;
+    return "Species found:\n" + c.map(s => `  • ${s.species}: ${s.count} (${s.rarity})`).join('\n') + (f.length ? `\n\n${f.length} detection(s) flagged for manual review.` : '');
+  }
+  if (m.includes('rare') || m.includes('special')) {
+    const rare = c.filter(s => s.rarity === 'rare');
+    if (rare.length) return "Rare species spotted: " + rare.map(s => s.species).join(', ') + "!";
+    return "No rare species this time — keep diving!";
+  }
+  if (m.includes('school') || m.includes('group')) {
+    const schools = c.filter(s => s.species.startsWith('School of'));
+    if (schools.length) return "Schools detected: " + schools.map(s => s.species).join(', ');
+    return "No schools detected. Schools are flagged when 5+ of the same species appear in one frame.";
+  }
+  if (m.includes('how') && (m.includes('work') || m.includes('pipeline') || m.includes('model'))) {
+    return "DiveBuddy uses 7 YOLO models:\n  1. FishSpecies — 481 species\n  2. Seychelles — 72 species (Indo-Pacific)\n  3. FishInv — 15 classes (families + named species)\n  4. ReefFamilies — 13 reef fish families\n  5. MarineLife — eels, crabs, starfish, jellyfish, shells\n  6. MegaFauna — sharks, rays, sea turtles\n  7. YOLOv8n — diver filter\n\nBoT-SORT tracker deduplicates across frames. 85%+ confidence = auto-counted; below that = review queue.";
+  }
+  if (m.includes('count') || m.includes('how many') || m.includes('total')) {
+    const total = c.reduce((s, x) => s + x.count, 0);
+    return `Total: ${total} individual(s) across ${c.length} species. ${f.length} in review queue.`;
+  }
+  if (m.includes('review') || m.includes('flagged') || m.includes('unsure')) {
+    if (!f.length) return "Nothing flagged — all detections were confident enough to auto-count!";
+    return `${f.length} detection(s) need review:\n` + f.map(r => `  • ${r.description} at ${r.timestamp}`).join('\n');
+  }
+  if (m.includes('hello') || m.includes('hi') || m.includes('hey')) return "Hey! Ask me about what was found, rare species, how detection works, or your review queue.";
+  if (m.includes('thank')) return "Happy diving! 🤿";
+  return "Try asking:\n  • \"What did you find?\"\n  • \"Any rare species?\"\n  • \"How does detection work?\"\n  • \"What's in the review queue?\"";
+}
 
 // Re-render leaderboard when navigating to it
 const origGo = go;

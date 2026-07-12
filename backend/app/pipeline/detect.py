@@ -37,7 +37,9 @@ MODEL_CONFIGS = [
     {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 3},
     {"name": "ReefFamilies", "weights": "ReefFamilies.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 1},
     {"name": "MarineLife", "weights": "MarineLife.pt", "accept_conf": 0.75, "review_conf": 0.30, "specificity": 1,
-     "class_filter": {"eel", "starfish", "crab", "jellyfish"}},
+     "class_filter": {"eel", "starfish", "crab", "jellyfish", "shells"}},
+    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.55, "review_conf": 0.25, "specificity": 3,
+     "skip_generic_downgrade": True},
 ]
 
 JUNK_CLASS_PATTERN = re.compile(r'^[A-Z0-9]{4,}-[A-Z0-9]')
@@ -166,7 +168,7 @@ def run_photo_detection(image_path: pathlib.Path, crops_dir: pathlib.Path) -> li
                 cv2.imwrite(str(crop_path), crop)
 
             specificity = config["specificity"]
-            if species.lower() in GENERIC_CLASSES:
+            if species.lower() in GENERIC_CLASSES and not config.get("skip_generic_downgrade"):
                 specificity = 0
 
             raw.append({
@@ -257,7 +259,7 @@ def run_detection(frames: list[dict], crops_dir: pathlib.Path) -> list[dict]:
                     cv2.imwrite(str(crop_path), crop)
 
                 specificity = config["specificity"]
-                if species.lower() in GENERIC_CLASSES:
+                if species.lower() in GENERIC_CLASSES and not config.get("skip_generic_downgrade"):
                     specificity = 0
 
                 detections.append({

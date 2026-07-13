@@ -1,0 +1,17 @@
+# iNaturalist auto-refresh credentials.
+# Copy this file to `.inat_env` (same folder) and fill in your values.
+# `.inat_env` is gitignored -- never commit it.
+#
+# Get CLIENT_ID / CLIENT_SECRET by registering an OAuth application at:
+#   https://www.inaturalist.org/oauth/applications/new
+#   (Name it anything; Redirect URI can be urn:ietf:wg:oauth:2.0:oob)
+# USERNAME / PASSWORD are your normal iNaturalist login.
+#
+# With all four set, the backend mints and auto-refreshes its API token itself,
+# so identification never expires. If they are absent, it falls back to the
+# static INAT_TOKEN (manual, ~24h).
+
+INAT_CLIENT_ID=your_client_id_here
+INAT_CLIENT_SECRET=your_client_secret_here
+INAT_USERNAME=your_inaturalist_username
+INAT_PASSWORD=your_inaturalist_password

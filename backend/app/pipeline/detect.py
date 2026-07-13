@@ -31,18 +31,41 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # so that borderline detections (accept_conf > conf >= review_conf) aren't
 # silently dropped -- they surface in the low-confidence review queue instead
 # of just vanishing.
+#
+# SPECIFICITY HIERARCHY -- "most exact detector wins".
+# When two models detect the same physical animal (overlapping boxes), cross-model
+# dedup keeps the detection from the model with the HIGHER `specificity`, so the
+# most taxonomically precise identification takes precedence and the coarser
+# models only fill in what the precise ones miss. The scale (higher = more exact):
+#   5  single-species specialist   (Lionfish)
+#   4  species-level, 100s of spp. (FishSpecies, Seychelles, MultiClass)
+#   3  genus-level                 (Corals)
+#   2  family-level                (FishInv, ReefFamilies)
+#   1  coarse group / megafauna    (MegaFauna: shark/ray/turtle, MarineLife: eel/crab/...)
+# Generic labels ("fish", "shark", ...) are dynamically downgraded to 0 below, so a
+# bare "fish" never outranks a real family/species call. The list is ordered
+# most-exact -> least-exact to mirror the hierarchy (order itself is cosmetic;
+# `specificity` is what drives the dedup tie-break).
 MODEL_CONFIGS = [
-    {"name": "FishSpecies", "weights": "FishSpecies.pt", "accept_conf": 0.75, "review_conf": 0.25, "specificity": 4},
-    {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 2},
-    {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 3},
-    {"name": "ReefFamilies", "weights": "ReefFamilies.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 1},
-    {"name": "MarineLife", "weights": "MarineLife.pt", "accept_conf": 0.75, "review_conf": 0.30, "specificity": 1,
-     "class_filter": {"eel", "starfish", "crab", "jellyfish", "shells"}},
-    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.55, "review_conf": 0.25, "specificity": 3,
-     "skip_generic_downgrade": True},
-    {"name": "Lionfish", "weights": "lionfish.pt", "accept_conf": 0.65, "review_conf": 0.25, "specificity": 4},
+    # Specialist detectors -- each owns a niche no other model covers well.
+    {"name": "Lionfish", "weights": "lionfish.pt", "accept_conf": 0.65, "review_conf": 0.25, "specificity": 5},
     {"name": "Corals", "weights": "corals.pt", "accept_conf": 0.70, "review_conf": 0.30, "specificity": 3},
-    {"name": "MultiClass", "weights": "multiclass-wts.pt", "accept_conf": 0.75, "review_conf": 0.25, "specificity": 4},
+    # High priority: MegaFauna is the ONLY turtle/shark/ray detector, so its
+    # detections must win the cross-model dedup tie-break instead of being
+    # overwritten by a fish-species model that spuriously overlaps the animal
+    # (that is what was relabelling the sea turtle as "unicornfish").
+    {"name": "MegaFauna", "weights": "MegaFauna.pt", "accept_conf": 0.55, "review_conf": 0.25, "specificity": 6,
+     "skip_generic_downgrade": True},
+    # Core fish species / family detectors.
+    {"name": "FishSpecies", "weights": "FishSpecies.pt", "accept_conf": 0.75, "review_conf": 0.25, "specificity": 4},
+    {"name": "Seychelles", "weights": "Seychelles.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 4},
+    {"name": "FishInv", "weights": "FishInv.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 2},
+    # DISABLED -- broad/mixed generalists that mostly produced mislabels and are
+    # redundant with the species models above. Re-enable by uncommenting.
+    # {"name": "MultiClass", "weights": "multiclass-wts.pt", "accept_conf": 0.75, "review_conf": 0.25, "specificity": 4},
+    # {"name": "ReefFamilies", "weights": "ReefFamilies.pt", "accept_conf": 0.80, "review_conf": 0.30, "specificity": 2},
+    # {"name": "MarineLife", "weights": "MarineLife.pt", "accept_conf": 0.75, "review_conf": 0.30, "specificity": 1,
+    #  "class_filter": {"eel", "starfish", "crab", "jellyfish", "shells"}},
 ]
 
 JUNK_CLASS_PATTERN = re.compile(r'^[A-Z0-9]{4,}-[A-Z0-9]')

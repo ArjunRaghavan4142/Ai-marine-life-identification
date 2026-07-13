@@ -9,3 +9,6 @@ ultralytics
 opencv-python
 pandas
 reportlab
+requests            # iNaturalist / Gemini HTTP calls
+google-genai        # optional: Gemini Vision engine (vision_id.py)
+# open_clip_torch   # optional: local CLIP engine (clip_id.py) -- heavy, install only if used

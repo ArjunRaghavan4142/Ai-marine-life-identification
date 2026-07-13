@@ -9,3 +9,5 @@ divebuddy.zip
 datasets/roboflow/
 datasets/fishnet/
 datasets/lila/
+backend/.inat_env
+training_runs/

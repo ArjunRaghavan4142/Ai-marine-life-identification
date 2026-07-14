@@ -1,121 +1,113 @@
-# DiveBuddy MVP
+# DiveBuddy — AI Marine Life Identification
 
-AI pipeline that turns an uploaded dive video into a biodiversity report:
-frame extraction → marine species detection/tracking → duplicate-count
-reduction → low-confidence review flagging → CSV/PDF report.
+An app that turns dive footage into a biodiversity report. Divers and
+researchers upload a video (or photo); DiveBuddy detects the marine animals,
+removes duplicate sightings of the same individual, identifies each one, and
+produces a species summary plus CSV/PDF reports.
 
-Detection runs on [marine-detect](https://github.com/Orange-OpenSource/marine-detect)'s
-pretrained YOLOv8 checkpoints (18 reef species/taxa across two models), with
-duplicate suppression via TrackTrack (bundled in `ultralytics`, tuned in
-`backend/app/pipeline/tracktrack_divebuddy.yaml`). See `datasets/README.md`
-for the FishNet/LILA fine-tuning path once real dive footage surfaces
-species these models miss.
-
-## Performance: GPU vs CPU
-
-Frames are sampled at 5 fps because anything sparser measurably misses real
-sightings (verified against real dive footage — see git history on
-`backend/app/main.py`), and TrackTrack needs continuous-enough motion between
-frames to keep an animal's identity stable across a moving camera. That's a
-lot of YOLO inference calls per video, so hardware matters a lot here:
-
-- **CPU only**: ~5 minutes of processing per 20 seconds of footage. A real
-  20-60 minute dive would take **hours**. Fine for short clips, not viable
-  for full dive logs.
-- **NVIDIA GPU** (`device="cuda"` in `backend/app/pipeline/detect.py`, picked
-  automatically when available): the same 20s clip measured at **~1 minute**
-  — roughly 5x faster, verified with identical detection output on both. A
-  full dive is still minutes rather than seconds, but no longer hours.
-
-There's still no smarter adaptive sampling (e.g. skipping visually-static
-stretches) — that's the next lever if GPU still isn't fast enough for very
-long videos.
-
-## Run it
+## Pipeline
 
 ```
-# one-time setup
-.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-.venv\Scripts\python.exe scripts\download_models.py
-
-# if you have an NVIDIA GPU, swap in the CUDA build of torch (~5x faster --
-# see "Performance" above). Check your GPU/driver first with `nvidia-smi`;
-# cu128 works with any reasonably recent driver.
-.venv\Scripts\python.exe -m pip uninstall -y torch torchvision
-.venv\Scripts\python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-
-# start the API
-.venv\Scripts\python.exe -m uvicorn app.main:app --reload --app-dir backend
-
-# open frontend/index.html in a browser
+video ─▶ frame extraction ─▶ detection + tracking ─▶ aggregation ─▶ identification ─▶ report
+        (OpenCV, 5 fps)      (YOLO ensemble +        (dedup, unique   (iNaturalist    (CSV/PDF)
+                              BoT-SORT tracker)       counting)        Vision)
 ```
 
-## Layout
+1. **Frame extraction** — OpenCV samples frames from the upload.
+2. **Detection + tracking** — a YOLO model ensemble finds animals; BoT-SORT
+   keeps one track ID per individual across frames (so one fish isn't counted
+   once per frame).
+3. **Aggregation** — counts unique tracks, merges fragmented/overlapping
+   tracks, and routes weak detections to a review queue.
+4. **Identification** — crops of each animal are named (see below).
+5. **Report** — per-species counts, confidence, rarity, and a low-confidence
+   review list, exported as CSV and PDF.
 
-The backend (`backend/`) is a standalone, UI-agnostic script — it doesn't know
-or care what frontend talks to it. `frontend/index.html` is just the current
-UI wired to it. Swapping in a new UI design means pointing its JS at the API
-contract below; it does not touch anything in `backend/`. This is exactly how
-`frontend/index.html` itself got built — a separately-designed HTML mockup
-had its fetch calls pointed at these same endpoints.
+### Detection models
+A trimmed ensemble of **specialist + core** YOLO detectors (see
+`backend/app/pipeline/detect.py`):
+- Specialists: **Lionfish**, **Corals**, **MegaFauna** (turtle/shark/ray)
+- Core fish: **FishSpecies**, **Seychelles**, **FishInv**
 
-- `backend/app/main.py` — FastAPI app: upload endpoint, job status/results, report downloads
-- `backend/app/pipeline/` — frame extraction, detection+tracking, aggregation, report generation
-- `backend/app/rarity_map.json` — placeholder common/uncommon/rare tag per species (not from real survey data yet)
-- `frontend/index.html` — current UI, wired to the API contract below
-- `scripts/download_models.py` — fetches the marine-detect model weights
-- `datasets/README.md` — FishNet/LILA notes for future fine-tuning
+Cross-model dedup keeps the most specific detection when two models overlap
+(the `specificity` field). MegaFauna is given top priority because it is the
+only turtle/shark/ray detector and must not be overwritten by a fish model's
+overlapping guess.
 
-## API contract
+Broad/generalist models (ReefFamilies, MultiClass, MarineLife) were disabled —
+they were redundant with the species models and mostly produced mislabels.
 
-Base URL: `http://localhost:8000`. CORS is wide open (`allow_origins=["*"]`),
-so any UI — a local HTML file, a dev server on a different port, whatever —
-can call these directly with no proxy/config needed.
+## Species identification — current approach & decision
 
-**`POST /upload`** — multipart form, field name `file`, must end in `.mp4`
-(case-insensitive). Saves the video and kicks off processing in the
-background; returns immediately.
-```json
-{"job_id": "1cec1ad8648e", "status": "processing", "filename": "dive.mp4"}
+**Detection answers *where* an animal is; a vision model answers *what* it is.**
+The YOLO detectors' own class labels are unreliable at species level (they call
+reef fish "grouper/shark/etc."), so naming is done by a separate vision model on
+the crops, collapsed to a coarse **group** (Parrotfish, Angelfish, Sea Turtle,
+Moorish Idol, …) with score-weighted multi-crop voting.
+
+**Current engine: iNaturalist Vision** (`backend/app/pipeline/inat_id.py`).
+- Trained on the world's largest citizen-science organism dataset — real
+  underwater photos in messy conditions, so it generalizes well to blurry dive
+  crops where local models (CLIP) and the detectors' own labels failed.
+- Results scoped to reef-relevant taxa (fish/reptiles/inverts) to drop
+  spurious mammal/bird guesses.
+- **Auto-refreshing auth** (`inat_auth.py`): with OAuth credentials configured
+  it mints and refreshes its own API token, so it never expires. Falls back to
+  a static `INAT_TOKEN` otherwise. See "Setup" below.
+
+Alternative engines are kept in-tree and can be swapped in `main.py`:
+- **Gemini Vision** (`vision_id.py`) — very accurate, but the free tier is
+  capped at ~20 requests/day/model.
+- **Offline / YOLO-label** (`identify.regroup_yolo`) — fully offline and
+  instant, but mislabels reef fish (models' limitation).
+- **Local CLIP** (`clip_id.py`) — offline; too weak on these crops (kept for
+  reference).
+
+### Why iNaturalist now, and when to switch to FishNet
+
+**Decision (for private long-term display & testing, app *not* published): use
+iNaturalist auto-refresh.** It is already accurate on real footage, needs no
+training, and is low-maintenance. iNaturalist's rate-limit / ToS concerns apply
+to a *published* app with many users hammering their API — not to private,
+low-volume demo and testing use.
+
+**Planned upgrade path — FishNet, later, only if we publish:** if DiveBuddy is
+ever published (or needs to run fully offline / independent of iNaturalist), the
+right move is to **fine-tune our own model on the FishNet dataset *plus* labeled
+crops from our own dive footage**, kept alongside turtle/megafauna detection.
+Notes for when we do this:
+- FishNet is **fish-only** — it has no sea turtles, so MegaFauna (or turtle
+  training data) must be retained for the turtle.
+- FishNet is curated reference photos; our footage is blurry dive video, so
+  domain adaptation on our own labeled crops is needed for it to transfer.
+
+This is deliberately deferred — not needed for current display/testing.
+
+## Setup
+
+```bash
+# backend
+cd backend
+pip install -r requirements.txt        # fastapi, uvicorn, ultralytics, torch, opencv, reportlab, requests
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# frontend (separate shell)
+python -m http.server 5500 --directory frontend
 ```
 
-**`GET /jobs/{job_id}`** — poll this until `status` is `"done"` or `"error"`.
-```json
-{"job_id": "1cec1ad8648e", "status": "done", "error": null}
-```
+Model weights (`backend/app/models/*.pt`) are gitignored (large binaries).
 
-**`GET /jobs/{job_id}/results`** — 409 until the job is done.
-```json
-{
-  "species_summary": [
-    {"species": "fish", "unique_count": 3, "avg_confidence": 0.75, "rarity": "common"}
-  ],
-  "review_queue": [
-    {"track_id": "FishInv_19", "species_guess": "fish", "max_confidence": 0.38,
-     "timestamp_sec": 12.0, "crop_path": "1cec.../crops/FishInv_19_60.jpg"}
-  ]
-}
-```
-`crop_path` is servable directly at `GET /outputs/{crop_path}` (static mount).
+### iNaturalist auto-refresh (recommended — token never expires)
+1. Register an OAuth app: https://www.inaturalist.org/oauth/applications/new
+   (Redirect URI `urn:ietf:wg:oauth:2.0:oob`) → get Client ID + Secret.
+2. `cp backend/.inat_env.example backend/.inat_env` and fill in Client ID,
+   Client Secret, and your iNat username + password. **`.inat_env` is
+   gitignored — never commit it.**
+3. Restart the backend. It now self-refreshes its token.
 
-**`GET /jobs/{job_id}/report.csv`** / **`GET /jobs/{job_id}/report.pdf`** —
-file downloads, 409 until done.
+Without `.inat_env`, set a static `INAT_TOKEN` env var (from
+inaturalist.org/users/api_token) — but that expires ~24h.
 
-**`GET /jobs`** — full job history, most recent first. Powers Home /
-Previous Dives.
-```json
-{"jobs": [{"job_id": "...", "filename": "...", "status": "done",
-  "uploaded_at": "2026-07-08T16:35:44+00:00", "species_count": 2,
-  "total_sightings": 4, "flagged_count": 1}]}
-```
-
-**`GET /species`** — the 18-class catalog, tallied against every completed
-job. Powers Fish Dex.
-```json
-{"species": [{"species": "fish", "seen": true, "total_sightings": 3}]}
-```
-
-Job history is in-memory only — it resets if the backend restarts. There's
-no auth, no rate limiting, and no per-user scoping (every job is global);
-none of that was needed for a single-user MVP, but a next UI that assumes
-multiple accounts would need those built first.
+## Repo notes
+- Secrets (API tokens/keys, `.inat_env`) must never be committed.
+- `datasets/`, model weights, uploads, and outputs are gitignored.

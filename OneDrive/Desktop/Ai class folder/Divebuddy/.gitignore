@@ -9,3 +9,11 @@ divebuddy.zip
 datasets/roboflow/
 datasets/fishnet/
 datasets/lila/
+datasets/fish_species/
+datasets/reef_families/
+backend/.inat_env
+training_runs/
+eval_cache/
+# YOLO base weights (downloaded, not source)
+yolo26n.pt
+yolov8s.pt

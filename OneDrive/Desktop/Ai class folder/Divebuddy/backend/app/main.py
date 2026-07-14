@@ -15,7 +15,16 @@ from pydantic import BaseModel
 from app.pipeline.aggregate import aggregate_tracks, common_name
 from app.pipeline.detect import run_detection, run_photo_detection
 from app.pipeline.frames import extract_frames
+from app.pipeline.identify import group_of, reidentify
+from app.pipeline.inat_id import identify_inat
 from app.pipeline.report import generate_csv, generate_pdf
+
+# Species naming engine: iNaturalist's computer-vision model (organism-specific,
+# stronger on real reef species than the detectors' incidental labels). Needs a
+# personal iNat JWT in INAT_TOKEN -- it expires ~24h, so regenerate at
+# inaturalist.org/users/api_token and update the env when identification stops
+# working.
+INAT_TOKEN = os.environ.get("INAT_TOKEN", "")
 
 app = FastAPI(title="DiveBuddy API")
 
@@ -98,15 +107,12 @@ def list_regions():
 def process_video(job_id: str, video_path: pathlib.Path) -> None:
     job_dir = OUTPUT_DIR / job_id
     try:
-        # 5 fps balances two failure modes found while testing on real dive
-        # footage: too sparse (1-2 fps) and TrackTrack simply stops finding new
-        # animals in the back half of a clip as the camera pans to new reef --
-        # verified on a 20s test clip where 2 fps found nothing new after 7s
-        # despite the clip running to 20s, while 5 fps kept finding new fish
-        # through the very end. Denser sampling is ~5x the inference cost, but
-        # under-counting real sightings is worse than mild over-counting for a
-        # biodiversity survey tool. On CPU this does not scale to full-length
-        # (20-60 min) dive videos -- expect hours, not minutes -- see README.
+        # Frame sampling rate -- the main speed lever, but recall-sensitive.
+        # 5 fps is required: an empirical 3 fps test was ~35% faster but DROPPED
+        # the sea turtle and both Moorish idols from the 58s test clip (they were
+        # only caught in frames 3 fps skipped). Detection cost scales linearly
+        # with this, so on a memory-bound GPU real speedup needs a bigger GPU
+        # (to batch) rather than fewer frames -- see README.
         extraction = extract_frames(video_path, job_dir / "frames", fps_sample=5.0)
         frames = extraction["frames"]
         detections = run_detection(frames, job_dir / "crops")
@@ -118,6 +124,12 @@ def process_video(job_id: str, video_path: pathlib.Path) -> None:
                 detection["crop_path"] = pathlib.Path(detection["crop_path"]).relative_to(OUTPUT_DIR).as_posix()
 
         result = aggregate_tracks(detections, RARITY_MAP)
+
+        # iNaturalist Vision: group-level identification from best crops with
+        # score-weighted multi-crop voting. Falls back to Unknown on any error.
+        result = reidentify(result, OUTPUT_DIR, INAT_TOKEN, RARITY_MAP,
+                            identify=identify_inat, method="inaturalist")
+        print(f"  Identification complete — {len(result['species_summary'])} groups")
 
         (job_dir / "detections.json").write_text(json.dumps(detections, indent=2))
         generate_csv(result, job_dir / "report.csv")
@@ -152,10 +164,26 @@ async def identify_photo(file: UploadFile = File(...)):
         detections = run_photo_detection(image_path, photo_dir / "crops")
 
         for d in detections:
-            d["species_common"] = common_name(d["species"])
+            name = common_name(d["species"])
+            d["species_common"] = name
+            d["group"] = group_of(name)
             d["rarity"] = RARITY_MAP.get(d["species"], "unknown")
             if d["crop_path"] is not None:
                 d["crop_path"] = pathlib.Path(d["crop_path"]).relative_to(OUTPUT_DIR).as_posix()
+
+        # iNaturalist re-identification for photos (accurate naming).
+        if detections and INAT_TOKEN:
+            crop_full_paths = [
+                str(OUTPUT_DIR / d["crop_path"]) if d.get("crop_path") else ""
+                for d in detections
+            ]
+            ids = identify_inat(crop_full_paths, INAT_TOKEN)
+            for d, gid in zip(detections, ids):
+                if gid.get("common_name", "Unknown") != "Unknown":
+                    d["species"] = gid["common_name"]
+                    d["species_common"] = gid["common_name"]
+                    d["group"] = gid.get("group", d["group"])
+                    d["scientific_name"] = gid.get("scientific_name", "")
 
         input_rel = image_path.relative_to(OUTPUT_DIR).as_posix()
         return {

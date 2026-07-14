@@ -1123,6 +1123,26 @@ def _detect_schools(tracks: dict[str, list[dict]], track_majority: dict[str, str
     return schools
 
 
+def _top_crops(dets: list[dict], k: int = 5) -> list[str]:
+    """Up to k distinct crop paths for a track, highest confidence first.
+
+    Multi-crop identification votes across several of a track's clearest frames
+    instead of betting the whole track on one (possibly ambiguous) best frame.
+    """
+    ranked = sorted((d for d in dets if d.get("crop_path")), key=lambda d: d["confidence"], reverse=True)
+    seen: set = set()
+    out: list[str] = []
+    for d in ranked:
+        cp = d["crop_path"]
+        if cp in seen:
+            continue
+        seen.add(cp)
+        out.append(cp)
+        if len(out) >= k:
+            break
+    return out
+
+
 def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict:
     detections = _dedup_cross_model(detections)
 
@@ -1168,12 +1188,16 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
             accepted_tracks.append((track_id, species, accepted))
         else:
             best = max(track_detections, key=lambda d: d["confidence"])
+            frame_span = len({d["frame_index"] for d in track_detections})
             review_queue.append({
                 "track_id": track_id,
                 "species_guess": best["species"],
                 "max_confidence": round(best["confidence"], 3),
+                "detection_count": len(track_detections),
+                "frame_span": frame_span,
                 "timestamp_sec": best["timestamp_sec"],
                 "crop_path": best["crop_path"],
+                "top_crops": _top_crops(track_detections),
             })
 
     species_summary = []
@@ -1200,6 +1224,7 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
             "best_confidence": round(best["confidence"], 3),
             "best_bbox": best.get("bbox"),
             "best_crop": best.get("crop_path"),
+            "top_crops": _top_crops(accepted),
             "first_seen": min(timestamps),
             "last_seen": max(timestamps),
             "timestamps": timestamps,
@@ -1213,12 +1238,16 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
             confident = [d for d in dets if d["confidence"] >= MIN_WRITE_CONF]
         if not confident:
             best = max(dets, key=lambda d: d["confidence"])
+            frame_span = len({d["frame_index"] for d in dets})
             review_queue.append({
                 "track_id": f"school_{species}",
                 "species_guess": f"School of {common_name(species)}",
                 "max_confidence": round(best["confidence"], 3),
+                "detection_count": len(dets),
+                "frame_span": frame_span,
                 "timestamp_sec": best["timestamp_sec"],
                 "crop_path": best["crop_path"],
+                "top_crops": _top_crops(dets),
             })
             continue
         best = max(confident, key=lambda d: d["confidence"])
@@ -1238,6 +1267,7 @@ def aggregate_tracks(detections: list[dict], rarity_map: dict[str, str]) -> dict
             "best_confidence": round(best["confidence"], 3),
             "best_bbox": best.get("bbox"),
             "best_crop": best.get("crop_path"),
+            "top_crops": _top_crops(confident),
             "first_seen": min(timestamps),
             "last_seen": max(timestamps),
             "timestamps": timestamps,

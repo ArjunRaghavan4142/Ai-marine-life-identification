@@ -215,6 +215,14 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* ======= INTRO STEPS ======= */
 .intro-step{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 16px 12px;display:flex;gap:14px;align-items:flex-start;}
 .intro-num{width:32px;height:32px;background:var(--teal-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--teal);font-weight:700;font-size:15px;flex-shrink:0;}
+/* ======= NEW-DIVER ONBOARDING CAROUSEL ======= */
+.intro-slide{display:none;text-align:center;padding:0 30px;width:100%;box-sizing:border-box;}
+.intro-slide.active{display:block;animation:fadeIn .28s ease;}
+.intro-hero{font-size:76px;line-height:1;margin-bottom:22px;}
+.intro-h{font-size:24px;font-weight:700;margin-bottom:12px;color:var(--text);letter-spacing:-.4px;}
+.intro-p{font-size:14px;line-height:1.6;color:var(--muted);max-width:300px;margin:0 auto;}
+.intro-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .25s;}
+.intro-dot.active{background:var(--teal);width:20px;border-radius:4px;}
 
 /* ======= MISC ======= */
 .researcher-badge{background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.25);border-radius:14px;padding:12px 14px;margin:0 16px 12px;display:flex;gap:10px;align-items:flex-start;}
@@ -312,35 +320,47 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   </div>
 </div>
 
-<!-- ===== HOW TO USE ===== -->
+<!-- ===== HOW TO USE / NEW-DIVER ONBOARDING CAROUSEL ===== -->
 <div class="screen" id="screen-intro">
-  <div class="page-header">
-    <div class="page-title">How it works</div>
-    <div class="page-subtitle">Getting started with DiveBuddy</div>
-  </div>
-  <div class="scroll-area">
-    <div class="intro-step">
-      <div class="intro-num">1</div>
-      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Record your dive</div>
-      <div style="font-size:13px;color:var(--muted);">Use an underwater camera or your phone in a waterproof case. Mount it to capture wide footage of the reef.</div></div>
+  <div class="scroll-area" style="display:flex;flex-direction:column;padding-bottom:0;">
+    <div style="text-align:right;padding:16px 20px 0;height:20px;">
+      <span onclick="skipIntro()" id="intro-skip" style="color:var(--muted);font-size:13px;cursor:pointer;">Skip</span>
     </div>
-    <div class="intro-step">
-      <div class="intro-num">2</div>
-      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Upload after surfacing</div>
-      <div style="font-size:13px;color:var(--muted);">Open DiveBuddy, start a new dive log, and upload your video. Our AI scans it frame by frame.</div></div>
+    <div id="intro-slides" style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0;">
+      <div class="intro-slide active">
+        <div class="intro-hero">🐠</div>
+        <div class="intro-h">Welcome to DiveBuddy</div>
+        <div class="intro-p">Your AI dive buddy. Film the reef, and we'll name every fish, coral, and critter you swam past — then turn it into points and a personal Fish Dex.</div>
+      </div>
+      <div class="intro-slide">
+        <div class="intro-hero">🎥</div>
+        <div class="intro-h">1 · Film your dive</div>
+        <div class="intro-p">Use an underwater camera, or your phone in a waterproof case. Sweep it slowly across the reef to capture wide, steady footage.</div>
+      </div>
+      <div class="intro-slide">
+        <div class="intro-hero">🔍</div>
+        <div class="intro-h">2 · Let the AI scan it</div>
+        <div class="intro-p">Back on the surface, start a dive log and upload your video — or just a single photo. DiveBuddy scans it frame by frame to identify species.</div>
+      </div>
+      <div class="intro-slide">
+        <div class="intro-hero">📋</div>
+        <div class="intro-h">3 · Get your species report</div>
+        <div class="intro-p">See everything you spotted, with counts, rarity, and points. Anything the AI isn't sure about is flagged for a closer look.</div>
+      </div>
+      <div class="intro-slide">
+        <div class="intro-hero">🐢</div>
+        <div class="intro-h">4 · Dive responsibly</div>
+        <div class="intro-p">Protected and endangered species are clearly marked with a ⚠️. Keep your distance and never touch or chase marine life — just observing still scores the points.</div>
+      </div>
+      <div class="intro-slide">
+        <div class="intro-hero">🏆</div>
+        <div class="intro-h">5 · Climb the ranks</div>
+        <div class="intro-p">Rare species earn more points. Compete globally, by location, or just with friends — and help build real reef survey data.</div>
+      </div>
     </div>
-    <div class="intro-step">
-      <div class="intro-num">3</div>
-      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Get your species report</div>
-      <div style="font-size:13px;color:var(--muted);">See every species spotted, abundance, rarity, and your points. Unidentified species are flagged.</div></div>
-    </div>
-    <div class="intro-step">
-      <div class="intro-num">4</div>
-      <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Climb the leaderboard</div>
-      <div style="font-size:13px;color:var(--muted);">Rare species earn more points. Compete globally, by location, or just with friends.</div></div>
-    </div>
-    <div style="padding:4px 16px 16px;">
-      <button class="btn-p" onclick="go('home');updateHome();">Let's dive in 🤿</button>
+    <div id="intro-dots" style="display:flex;gap:6px;justify-content:center;padding:16px 0;"></div>
+    <div style="padding:0 16px 20px;">
+      <button class="btn-p" id="intro-next" onclick="nextIntro()">Next</button>
     </div>
   </div>
 </div>
@@ -708,6 +728,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     <div id="report-subtitle" class="page-subtitle">Your dive analysis results</div>
   </div>
   <div class="scroll-area">
+    <div id="report-endangered-banner" style="display:none;margin:0 16px 12px;" class="unid-box"></div>
     <div id="report-tags" style="display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap;"></div>
 
     <div class="sp-table">
@@ -815,6 +836,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <button class="tag tag-teal" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDex('')">All</button>
       <button class="tag tag-coral" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDexStatus('unseen')">Not seen</button>
       <button class="tag tag-gold" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDexStatus('rare')">Rare</button>
+      <button class="tag tag-coral" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDexStatus('endangered')">⚠️ Endangered</button>
     </div>
     <div class="dex-grid" id="dex-grid"></div>
     <div style="padding:12px 16px 0;font-size:11px;color:var(--muted);text-align:center;">🟢 Seen recently &nbsp;·&nbsp; 🔴 Not spotted &nbsp;·&nbsp; 🟡 Rare species</div>
@@ -1289,6 +1311,7 @@ function go(screen) {
     home: updateHome, leaderboard: renderLeaderboard, profile: renderProfile,
     achievements: renderAchievements, mydives: renderMyDives,
     fishdex: applyDexFilter,  // re-render so newly-seen species + sighting frames show
+    intro: () => showIntroSlide(0),  // reset onboarding carousel to the first slide
   };
   if (RENDERERS[screen]) { try { RENDERERS[screen](); } catch (e) { console.warn('render failed:', screen, e); } }
   // Initialise researcher hub whenever it's opened
@@ -1351,12 +1374,45 @@ function doSignup() {
     username, email, password, type: suUserType,
     org: document.getElementById('su-org')?.value || '',
     points: 0, totalDives: 0, totalSpecies: 0,
-    seenSpecies: [], createdAt: new Date().toISOString()
+    seenSpecies: [], onboarded: false, createdAt: new Date().toISOString()
   };
   DB.updateUser(user);
   currentUser = user;
   sessionStorage.setItem('cu', JSON.stringify(user));
-  go('intro');
+  go('intro');   // brand-new divers see the how-to carousel; go() resets it to slide 0
+}
+
+// ---- New-diver onboarding carousel ----
+let introSlide = 0;
+function showIntroSlide(n) {
+  const slides = document.querySelectorAll('#screen-intro .intro-slide');
+  if (!slides.length) return;
+  introSlide = Math.max(0, Math.min(n, slides.length - 1));
+  slides.forEach((s, i) => s.classList.toggle('active', i === introSlide));
+  const last = introSlide === slides.length - 1;
+  const nextBtn = document.getElementById('intro-next');
+  const skipBtn = document.getElementById('intro-skip');
+  if (nextBtn) nextBtn.textContent = last ? "Get started 🤿" : "Next";
+  if (skipBtn) skipBtn.style.visibility = last ? 'hidden' : 'visible';
+  const dots = document.getElementById('intro-dots');
+  if (dots) dots.innerHTML = Array.from(slides, (_, i) =>
+    `<div class="intro-dot ${i === introSlide ? 'active' : ''}"></div>`).join('');
+}
+function nextIntro() {
+  const slides = document.querySelectorAll('#screen-intro .intro-slide');
+  if (introSlide >= slides.length - 1) finishOnboarding();
+  else showIntroSlide(introSlide + 1);
+}
+function skipIntro() { finishOnboarding(); }
+function finishOnboarding() {
+  if (currentUser) {
+    const u = DB.users[currentUser.username] || currentUser;
+    u.onboarded = true;
+    DB.updateUser(u);
+    currentUser = u;
+    sessionStorage.setItem('cu', JSON.stringify(u));
+  }
+  go('home'); updateHome();
 }
 
 function showLogin() { go('login'); }
@@ -1496,6 +1552,42 @@ function videoFileSelected(input) {
   checkBackend();
 }
 
+
+// ============================================================
+// CONSERVATION STATUS  (IUCN Red List — single source of truth)
+// ============================================================
+// Only threatened taxa are listed; any name not present is treated as
+// Least Concern and shows no warning. Keys match BOTH the coarse group
+// names the backend returns in dive reports AND the Fish Dex species
+// names, so one lookup serves every screen.
+//   CR = Critically Endangered · EN = Endangered · VU = Vulnerable · NT = Near Threatened
+const CONSERVATION = {
+  // detector / report group names (what species reports use)
+  'Sea Turtle':'EN', 'Napoleon Wrasse':'EN', 'Bumphead Parrotfish':'VU',
+  'Giant Clam':'VU', 'Shark':'VU', 'Manta Ray / Stingray':'VU', 'Ray':'VU',
+  // Fish Dex species names
+  'Whale Shark':'EN', 'Great White Shark':'VU', 'Manta Ray':'EN',
+  'Hammerhead Shark':'CR', 'Whitetip Reef Shark':'VU', 'Green Sea Turtle':'EN',
+  'Hawksbill Turtle':'CR', 'Seahorse':'VU', 'Dugong':'VU',
+};
+const IUCN_LABEL = {CR:'Critically Endangered', EN:'Endangered', VU:'Vulnerable', NT:'Near Threatened'};
+// Look up conservation status by display name (tolerates a "School of " prefix).
+function conservationOf(name) {
+  if (!name) return null;
+  return CONSERVATION[name] || CONSERVATION[name.replace(/^School of /, '')] || null;
+}
+// CR/EN → red (coral) alert; VU/NT → amber (gold) caution.
+function iucnClass(code) { return (code === 'CR' || code === 'EN') ? 'tag-coral' : 'tag-gold'; }
+// Render a conservation-status pill for a species. style: 'full' (report) | 'compact' (dex card).
+function conservationBadge(name, style) {
+  const code = conservationOf(name);
+  if (!code) return '';
+  const label = IUCN_LABEL[code] || code;
+  const cls = iucnClass(code);
+  return style === 'compact'
+    ? `<span class="tag ${cls}" style="font-size:9px;padding:2px 7px;">⚠️ ${label}</span>`
+    : `<span class="tag ${cls}" style="font-size:9px;padding:1px 6px;margin-left:6px;vertical-align:middle;">⚠️ ${label.toUpperCase()}</span>`;
+}
 
 // Species emoji + rarity lookup for display
 const SPECIES_META = {
@@ -1762,7 +1854,7 @@ function renderReport(results) {
   document.getElementById('report-species-body').innerHTML = results.confirmed.map(r => `
     <div class="sp-row">
       <div>${thumbFor(r.species, r.emoji)}
-        <div class="sp-name">${r.species}</div>
+        <div class="sp-name">${r.species}${conservationBadge(r.species,'full')}</div>
         <div class="sp-sci">${r.scientific||''}</div>
       </div>
       <div style="font-family:'Space Mono',monospace;font-size:13px;">${r.count}</div>
@@ -1784,6 +1876,20 @@ function renderReport(results) {
     document.getElementById('report-flagged-ts').textContent = 'Timestamps: ' + results.flagged.map(f=>f.timestamp).join(', ');
   } else {
     document.getElementById('report-flagged-box').style.display = 'none';
+  }
+
+  // Endangered-species alert — flag protected/threatened animals to the diver
+  const endangered = results.confirmed.filter(r => conservationOf(r.species));
+  const banner = document.getElementById('report-endangered-banner');
+  if (endangered.length) {
+    const names = endangered.map(r => `${r.species} (${IUCN_LABEL[conservationOf(r.species)]})`).join(', ');
+    banner.style.display = 'flex';
+    banner.innerHTML = `<div>
+      <div style="font-size:12px;font-weight:700;color:var(--coral);">⚠️ ${endangered.length} protected species sighted</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">${names} — keep your distance, never touch, chase, or feed marine life, and report sightings to local conservation groups.</div>
+    </div>`;
+  } else {
+    banner.style.display = 'none';
   }
   const vrBtn = document.getElementById('stats-viewreport-btn');
   if (vrBtn) vrBtn.style.display = 'block';
@@ -2066,7 +2172,7 @@ function renderDex(species) {
       ${imgHtml}
       <div style="font-size:12px;font-weight:600;line-height:1.3;">${sp.name}</div>
       <div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:2px;">${sp.sci}</div>
-      <div style="margin-top:6px;"><span class="tag ${sp.status==='rare'?'tag-gold':sp.status==='uncommon'?'tag-teal':'tag'}" style="${sp.status==='common'?'background:rgba(138,180,200,0.1);color:var(--muted);font-size:10px;padding:2px 7px;':''}">${sp.pts} pts</span></div>
+      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;"><span class="tag ${sp.status==='rare'?'tag-gold':sp.status==='uncommon'?'tag-teal':'tag'}" style="${sp.status==='common'?'background:rgba(138,180,200,0.1);color:var(--muted);font-size:10px;padding:2px 7px;':''}">${sp.pts} pts</span>${conservationBadge(sp.name,'compact')}</div>
     </div>`;
   }).join('');
 }
@@ -2083,7 +2189,7 @@ function applyDexFilter() {
   const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
   let filtered = ALL_SPECIES.filter(sp =>
     (!dexFilter || sp.name.toLowerCase().includes(dexFilter) || sp.sci.toLowerCase().includes(dexFilter)) &&
-    (!dexStatusFilter || (dexStatusFilter==='rare'&&sp.status==='rare') || (dexStatusFilter==='unseen'&&!seen.includes(sp.name)))
+    (!dexStatusFilter || (dexStatusFilter==='rare'&&sp.status==='rare') || (dexStatusFilter==='unseen'&&!seen.includes(sp.name)) || (dexStatusFilter==='endangered'&&!!conservationOf(sp.name)))
   );
   renderDex(filtered);
 }
@@ -2094,7 +2200,9 @@ function showSpeciesDetail(name) {
   if (!sp) return;
   const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
   const isSeen = seen.includes(sp.name);
-  toast((isSeen ? '✓ ' : '') + sp.emoji + ' ' + sp.name + ' — ' + sp.pts + ' pts each');
+  const code = conservationOf(sp.name);
+  const warn = code ? ` · ⚠️ ${IUCN_LABEL[code]} — protected, keep your distance` : '';
+  toast((isSeen ? '✓ ' : '') + sp.emoji + ' ' + sp.name + ' — ' + sp.pts + ' pts each' + warn, !!code);
 }
 
 // ============================================================
@@ -2494,6 +2602,7 @@ function renderPhotoResults(data) {
   document.getElementById('photo-match-tags').innerHTML = [
     `<span class="tag ${meta.rarity === 'rare' ? 'tag-gold' : 'tag-teal'}">${meta.rarity.toUpperCase()}</span>`,
     `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">+${meta.pts} pts</span>`,
+    conservationBadge(top.species, 'compact'),
     top.flagged ? `<span class="tag tag-coral">⚑ Low confidence</span>` : `<span class="tag tag-teal">✓ Confirmed</span>`,
   ].join('');
 
@@ -2506,6 +2615,7 @@ function renderPhotoResults(data) {
         <span style="margin-right:6px;">${m.emoji}</span>
         <span style="font-weight:600;">${d.species}</span>
         ${d.flagged ? '<span class="tag tag-coral" style="font-size:9px;margin-left:6px;">⚑</span>' : ''}
+        ${conservationBadge(d.species,'full')}
         ${d.notes ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">${d.notes}</div>` : ''}
       </div>
       <div style="font-family:'Space Mono',monospace;font-size:12px;color:${d.flagged ? 'var(--coral)':'var(--teal)'};">${p}%</div>

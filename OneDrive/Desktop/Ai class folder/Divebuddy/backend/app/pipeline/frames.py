@@ -2,6 +2,8 @@
 import pathlib
 import cv2
 
+from app.pipeline.enhance import ENHANCE_FRAMES, enhance_bgr
+
 def extract_frames(
     video_path: pathlib.Path,
     out_dir: pathlib.Path,
@@ -42,8 +44,11 @@ def extract_frames(
         if frame_index % frame_interval == 0:
             timestamp_sec = round(frame_index / video_fps, 2)
             frame_path    = out_dir / f"frame_{saved_index:05d}.jpg"
+            # Underwater colour/contrast restoration before the frame is written,
+            # so the detectors AND the identifier both see corrected colour.
+            out_frame = enhance_bgr(frame) if ENHANCE_FRAMES else frame
             cv2.imwrite(
-                str(frame_path), frame,
+                str(frame_path), out_frame,
                 [cv2.IMWRITE_JPEG_QUALITY, 85]
             )
             frames.append({

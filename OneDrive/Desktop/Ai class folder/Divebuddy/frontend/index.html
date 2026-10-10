@@ -5,39 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>DiveBuddy</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500;700&display=swap');
+@font-face{font-family:'Open Sauce Sans';font-style:normal;font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/fontsource/fonts/open-sauce-sans@latest/latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'Open Sauce Sans';font-style:normal;font-weight:500;font-display:swap;src:url('https://cdn.jsdelivr.net/fontsource/fonts/open-sauce-sans@latest/latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Open Sauce Sans';font-style:normal;font-weight:700;font-display:swap;src:url('https://cdn.jsdelivr.net/fontsource/fonts/open-sauce-sans@latest/latin-700-normal.woff2') format('woff2');}
+@font-face{font-family:'Open Sauce Sans';font-style:normal;font-weight:800;font-display:swap;src:url('https://cdn.jsdelivr.net/fontsource/fonts/open-sauce-sans@latest/latin-800-normal.woff2') format('woff2');}
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#0a1628;--mid:#0d2240;--surface:#0e3a5c;
-  --teal:#00e5c4;--teal-dim:rgba(0,229,196,0.12);--teal-border:rgba(0,229,196,0.22);
-  --coral:#ff6b4a;--coral-dim:rgba(255,107,74,0.13);
-  --gold:#f5c842;--gold-dim:rgba(245,200,66,0.13);
-  --text:#e8f4f8;--muted:#8ab4c8;
-  --card:rgba(13,34,64,0.88);--border:rgba(0,229,196,0.18);
+  /* ===== Brand palette ===== */
+  --cream:#fff7ec;--navy:#042152;--blue:#0468c3;
+  /* ===== Surfaces (light theme) ===== */
+  --bg:#fff7ec;--mid:#ffffff;--surface:#eaf1fb;
+  /* ===== Primary accent (blue) ===== */
+  --teal:#0468c3;--teal-dim:rgba(4,104,195,0.10);--teal-border:rgba(4,104,195,0.28);
+  /* ===== Semantic ===== */
+  --coral:#e0392b;--coral-dim:rgba(224,57,43,0.10);
+  --gold:#b57d10;--gold-dim:rgba(181,125,16,0.14);
+  /* ===== Text ===== */
+  --text:#042152;--muted:#5f7088;
+  /* ===== Structure ===== */
+  --card:#ffffff;--border:rgba(4,33,82,0.12);
+  /* ===== Type ===== */
+  --font-display:'Avenir Next','Avenir','Open Sauce Sans','Segoe UI',Roboto,sans-serif;
+  --font-brand:'Open Sauce Sans','Avenir Next',Roboto,sans-serif;
+  --font-body:'Roboto','Segoe UI',Helvetica,Arial,sans-serif;
+  --font-mono:'Roboto Mono',ui-monospace,monospace;
 }
-body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);
+body{font-family:var(--font-body);background:linear-gradient(165deg,#0a2c5e 0%,#042152 55%,#03163a 100%);color:var(--text);
   min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
 .phone{width:390px;min-height:844px;background:var(--bg);border-radius:44px;
-  border:2px solid rgba(0,229,196,0.25);
-  box-shadow:0 0 80px rgba(0,229,196,0.12),0 40px 80px rgba(0,0,0,0.6);
+  border:1px solid rgba(4,33,82,0.10);
+  box-shadow:0 24px 70px rgba(3,15,40,0.5),0 4px 16px rgba(3,15,40,0.3);
   overflow:hidden;position:relative;display:flex;flex-direction:column;}
 .screen{display:none;flex-direction:column;flex:1;overflow:hidden;animation:fadeIn .22s ease;}
 .screen.active{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .status-bar{display:flex;justify-content:space-between;align-items:center;
-  padding:14px 28px 6px;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);flex-shrink:0;}
+  padding:14px 28px 6px;font-family:var(--font-mono);font-size:12px;color:var(--muted);flex-shrink:0;}
 .scroll-area{flex:1;overflow-y:auto;padding-bottom:90px;scrollbar-width:none;}
 .scroll-area::-webkit-scrollbar{display:none;}
-.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(10,22,40,0.97);
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(255,247,236,0.96);
   backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;
   justify-content:space-around;padding:10px 0 22px;z-index:100;}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;
-  border:none;cursor:pointer;color:var(--muted);font-family:'Space Grotesk',sans-serif;
+  border:none;cursor:pointer;color:var(--muted);font-family:var(--font-body);
   font-size:10px;padding:4px 10px;border-radius:10px;transition:all .2s;}
 .nav-btn.active{color:var(--teal);}
 .nav-btn svg{width:22px;height:22px;}
 .page-header{padding:20px 24px 10px;flex-shrink:0;}
-.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px;}
+.page-title{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--navy);}
 .page-subtitle{font-size:13px;color:var(--muted);margin-top:2px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin:0 16px 12px;}
 .tag{display:inline-block;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;}
@@ -45,16 +61,16 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .tag-coral{background:var(--coral-dim);color:var(--coral);}
 .tag-gold{background:var(--gold-dim);color:var(--gold);}
 .btn-p{background:var(--teal);color:var(--bg);border:none;border-radius:14px;padding:14px 24px;
-  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;
   width:100%;transition:all .2s;letter-spacing:.2px;}
-.btn-p:hover{background:#00ffdc;transform:scale(1.01);}
+.btn-p:hover{background:#0576e0;transform:scale(1.01);}
 .btn-p:disabled{opacity:.35;cursor:not-allowed;transform:none;}
 .btn-s{background:var(--teal-dim);color:var(--teal);border:1px solid var(--border);
-  border-radius:14px;padding:13px 24px;font-family:'Space Grotesk',sans-serif;
+  border-radius:14px;padding:13px 24px;font-family:var(--font-body);
   font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;}
-.btn-s:hover{background:rgba(0,229,196,0.18);}
-.inp{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
-  padding:13px 16px;color:var(--text);font-family:'Space Grotesk',sans-serif;
+.btn-s:hover{background:rgba(4,104,195,0.18);}
+.inp{background:rgba(4,33,82,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:13px 16px;color:var(--text);font-family:var(--font-body);
   font-size:14px;width:100%;outline:none;margin-bottom:12px;}
 .inp:focus{border-color:var(--teal);}
 .inp::placeholder{color:var(--muted);}
@@ -64,18 +80,18 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 /* ======= REGION SELECTOR ======= */
 .region-bar{display:flex;align-items:center;gap:8px;padding:0 16px 10px;}
-.region-select{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
-  padding:10px 14px;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;
+.region-select{flex:1;background:rgba(4,33,82,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;color:var(--teal);font-family:var(--font-body);font-size:13px;font-weight:600;
   cursor:pointer;appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e5c4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230468c3' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;}
 .region-select option{background:var(--mid);color:var(--text);}
 
 /* ======= CHATBOT FAB + MODAL ======= */
 .chat-fab{position:absolute;bottom:88px;right:16px;width:52px;height:52px;border-radius:50%;
   background:var(--teal);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 20px rgba(0,229,196,0.4);z-index:99;transition:all .2s;font-size:24px;}
-.chat-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,229,196,0.5);}
+  box-shadow:0 4px 20px rgba(4,104,195,0.4);z-index:99;transition:all .2s;font-size:24px;}
+.chat-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(4,104,195,0.5);}
 .chat-modal{position:absolute;bottom:0;left:0;right:0;top:0;background:var(--bg);z-index:200;
   display:none;flex-direction:column;animation:fadeIn .2s ease;}
 .chat-modal.open{display:flex;}
@@ -85,22 +101,22 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .chat-messages::-webkit-scrollbar{display:none;}
 .chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;}
 .chat-bubble.user{align-self:flex-end;background:var(--teal);color:var(--bg);border-bottom-right-radius:4px;}
-.chat-bubble.bot{align-self:flex-start;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
+.chat-bubble.bot{align-self:flex-start;background:rgba(4,33,82,0.06);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
 .chat-input-row{display:flex;gap:8px;padding:12px 16px 24px;border-top:1px solid var(--border);flex-shrink:0;}
-.chat-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;
-  padding:10px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;}
+.chat-input{flex:1;background:rgba(4,33,82,0.05);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;}
 .chat-input:focus{border-color:var(--teal);}
 .chat-send{background:var(--teal);border:none;border-radius:12px;padding:10px 16px;cursor:pointer;
-  color:var(--bg);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;}
+  color:var(--bg);font-family:var(--font-body);font-size:14px;font-weight:700;}
 .section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:4px 24px 8px;}
 .alert{border-radius:12px;padding:11px 14px;font-size:13px;margin:0 0 10px;}
-.alert-ok{background:rgba(0,229,196,0.08);border:1px solid rgba(0,229,196,0.25);color:var(--teal);}
-.alert-err{background:var(--coral-dim);border:1px solid rgba(255,107,74,0.3);color:var(--coral);}
+.alert-ok{background:rgba(4,104,195,0.08);border:1px solid rgba(4,104,195,0.25);color:var(--teal);}
+.alert-err{background:var(--coral-dim);border:1px solid rgba(224,57,43,0.3);color:var(--coral);}
 
 /* ======= SPLASH ======= */
-#screen-splash{background:radial-gradient(ellipse at 30% 70%,rgba(0,229,196,0.16) 0%,transparent 60%),var(--bg);justify-content:center;align-items:center;}
-.splash-logo{width:80px;height:80px;background:var(--teal);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;box-shadow:0 0 40px rgba(0,229,196,0.5);}
-.splash-title{font-size:42px;font-weight:700;letter-spacing:-2px;line-height:1;text-align:center;}
+#screen-splash{background:radial-gradient(ellipse at 30% 70%,rgba(4,104,195,0.16) 0%,transparent 60%),var(--bg);justify-content:center;align-items:center;}
+.splash-logo{width:80px;height:80px;background:var(--teal);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;box-shadow:0 0 40px rgba(4,104,195,0.5);}
+.splash-title{font-family:var(--font-brand);font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1;text-align:center;color:var(--navy);}
 .splash-title span{color:var(--teal);}
 .splash-sub{color:var(--muted);margin:12px 0 48px;font-size:15px;line-height:1.5;text-align:center;}
 .splash-btns{display:flex;flex-direction:column;gap:10px;}
@@ -108,7 +124,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* ======= SIGNUP / LOGIN ======= */
 .type-row{display:flex;gap:8px;margin:0 24px 20px;}
 .type-btn{flex:1;padding:12px;border-radius:14px;border:1px solid var(--border);
-  background:rgba(255,255,255,0.03);color:var(--muted);font-family:'Space Grotesk',sans-serif;
+  background:rgba(4,33,82,0.03);color:var(--muted);font-family:var(--font-body);
   font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
 .type-btn.sel{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);}
 .cb-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:20px;}
@@ -119,25 +135,25 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 /* ======= HOME ======= */
 .hero-card{margin:0 16px 14px;background:linear-gradient(135deg,var(--surface) 0%,var(--mid) 100%);
-  border-radius:22px;padding:22px;border:1px solid rgba(0,229,196,0.2);position:relative;overflow:hidden;}
+  border-radius:22px;padding:22px;border:1px solid rgba(4,104,195,0.2);position:relative;overflow:hidden;}
 .hero-card::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,229,196,0.15),transparent 70%);top:-50px;right:-30px;}
+  background:radial-gradient(circle,rgba(4,104,195,0.15),transparent 70%);top:-50px;right:-30px;}
 .hero-stats{display:flex;gap:18px;margin-top:16px;}
-.stat-val{font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;}
+.stat-val{font-size:22px;font-weight:700;color:var(--teal);font-family:var(--font-mono);}
 .stat-lbl{font-size:11px;color:var(--muted);}
 .new-dive-btn{margin:0 16px 14px;background:var(--teal);color:var(--bg);border:none;border-radius:18px;
   padding:18px 22px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;
-  font-family:'Space Grotesk',sans-serif;transition:all .2s;width:calc(100% - 32px);}
-.new-dive-btn:hover{transform:scale(1.01);box-shadow:0 8px 30px rgba(0,229,196,0.3);}
+  font-family:var(--font-body);transition:all .2s;width:calc(100% - 32px);}
+.new-dive-btn:hover{transform:scale(1.01);box-shadow:0 8px 30px rgba(4,104,195,0.3);}
 .dive-card{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
   margin:0 16px 8px;background:var(--card);border:1px solid var(--border);
   border-radius:14px;cursor:pointer;transition:border-color .2s;}
-.dive-card:hover{border-color:rgba(0,229,196,0.4);}
+.dive-card:hover{border-color:rgba(4,104,195,0.4);}
 
 /* ======= DIVE LOG ======= */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
-  background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
-.toggle{width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;
+  background:rgba(4,33,82,0.03);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
+.toggle{width:44px;height:24px;background:rgba(4,33,82,0.1);border-radius:12px;
   cursor:pointer;position:relative;transition:background .2s;border:none;}
 .toggle.on{background:var(--teal);}
 .toggle::after{content:'';position:absolute;width:18px;height:18px;background:white;
@@ -147,55 +163,63 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* ======= VIDEO UPLOAD ======= */
 .upload-zone{border:2px dashed var(--border);border-radius:18px;padding:36px 20px;
   text-align:center;cursor:pointer;transition:all .2s;margin:0 16px 12px;
-  background:rgba(0,229,196,0.02);}
-.upload-zone:hover{border-color:var(--teal);background:rgba(0,229,196,0.06);}
-.upload-zone.has-file{border-color:rgba(0,229,196,0.5);background:rgba(0,229,196,0.07);}
-.prog-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;margin:12px 0;overflow:hidden;}
+  background:rgba(4,104,195,0.02);}
+.upload-zone:hover{border-color:var(--teal);background:rgba(4,104,195,0.06);}
+.upload-zone.has-file{border-color:rgba(4,104,195,0.5);background:rgba(4,104,195,0.07);}
+.prog-bar{height:6px;background:rgba(4,33,82,0.07);border-radius:3px;margin:12px 0;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--teal-dim),var(--teal));border-radius:3px;width:0%;transition:width .35s;}
 
 /* ======= SPECIES REPORT ======= */
 .sp-table{margin:0 16px;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
-.sp-header{display:grid;grid-template-columns:1fr 60px 70px;background:rgba(0,229,196,0.08);
+.sp-header{display:grid;grid-template-columns:1fr 60px 70px;background:rgba(4,104,195,0.08);
   padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;}
 .sp-row{display:grid;grid-template-columns:1fr 60px 70px;padding:12px 14px;
   border-top:1px solid var(--border);align-items:center;font-size:13px;background:var(--card);}
-.sp-row.flagged{background:rgba(255,107,74,0.05);}
+.sp-row.flagged{background:rgba(224,57,43,0.05);}
 .sp-emoji{font-size:15px;margin-right:6px;}
 .sp-name{font-weight:600;font-size:13px;}
 .sp-sci{font-size:10px;color:var(--muted);font-style:italic;}
-.sp-pts{font-family:'Space Mono',monospace;font-size:13px;color:var(--teal);font-weight:700;}
-.unid-box{background:rgba(255,107,74,0.07);border:1px solid rgba(255,107,74,0.2);
+.sp-pts{font-family:var(--font-mono);font-size:13px;color:var(--teal);font-weight:700;}
+.unid-box{background:rgba(224,57,43,0.07);border:1px solid rgba(224,57,43,0.2);
   border-radius:12px;padding:10px 14px;margin:10px 16px 0;display:flex;justify-content:space-between;align-items:center;}
 
 /* ======= FISH DEX ======= */
 .dex-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
-.dex-card{border-radius:16px;padding:14px;cursor:pointer;border:1px solid var(--border);transition:all .2s;position:relative;}
-.dex-card.seen{border-color:rgba(0,229,196,0.3);background:rgba(0,229,196,0.06);}
-.dex-card.unseen{border-color:rgba(255,107,74,0.2);background:rgba(255,107,74,0.04);}
-.dex-card.rare{border-color:rgba(245,200,66,0.3);background:rgba(245,200,66,0.05);}
-.dex-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;}
+.dex-card{border-radius:16px;padding:12px;cursor:pointer;border:1.5px solid var(--border);transition:all .2s;position:relative;background:var(--mid);box-shadow:0 2px 6px rgba(4,33,82,0.05);}
+.dex-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(4,33,82,0.13);border-color:var(--teal-border);}
+.dex-card.seen{border-color:rgba(4,104,195,0.32);}
+.dex-card.unseen{border-color:rgba(224,57,43,0.28);}
+.dex-card.rare{border-color:rgba(181,125,16,0.4);background:linear-gradient(180deg,#fffaf0,#fff);}
+.dex-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 3px var(--mid);}
 .dex-dot.seen{background:var(--teal);}
 .dex-dot.unseen{background:var(--coral);}
 .dex-dot.rare{background:var(--gold);}
+/* framed species illustration (reference-style cartoon on cream) */
+.dex-illus{width:100%;height:98px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:54px;line-height:1;margin-bottom:9px;
+  background:linear-gradient(160deg,#eef4fc 0%,#f8fbff 100%);border:1px solid rgba(4,33,82,0.09);}
+.dex-thumb{width:100%;height:98px;border-radius:12px;overflow:hidden;margin-bottom:9px;position:relative;border:1px solid rgba(4,33,82,0.09);background:#eef4fc;}
+.dex-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.dex-shot-badge{position:absolute;top:6px;left:6px;background:var(--teal);color:#fff;font-size:8px;font-weight:800;letter-spacing:.3px;padding:2px 7px;border-radius:6px;}
+.dex-name{font-family:var(--font-display);font-size:13px;font-weight:700;line-height:1.25;color:var(--navy);}
 
 /* ======= LEADERBOARD ======= */
 .lb-tabs{display:flex;gap:6px;padding:0 16px 12px;}
 .lb-tab{flex:1;padding:9px;border-radius:12px;border:1px solid var(--border);
-  background:rgba(255,255,255,0.03);color:var(--muted);font-size:12px;font-weight:600;
-  cursor:pointer;transition:all .2s;font-family:'Space Grotesk',sans-serif;}
+  background:rgba(4,33,82,0.03);color:var(--muted);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:var(--font-body);}
 .lb-tab.active{background:var(--teal-dim);color:var(--teal);border-color:var(--teal-border);}
 .lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
   margin:0 16px 6px;background:var(--card);border:1px solid var(--border);}
-.lb-row.me{border-color:rgba(0,229,196,0.4);background:rgba(0,229,196,0.07);}
-.lb-rank{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;width:22px;text-align:center;}
+.lb-row.me{border-color:rgba(4,104,195,0.4);background:rgba(4,104,195,0.07);}
+.lb-rank{font-family:var(--font-mono);font-size:14px;font-weight:700;width:22px;text-align:center;}
 .lb-avatar{width:36px;height:36px;border-radius:12px;background:var(--surface);
   display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.lb-pts{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--teal);}
+.lb-pts{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--teal);}
 
 /* ======= ACHIEVEMENTS ======= */
 .ach-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px;}
 .ach-card{border-radius:14px;padding:12px 8px;text-align:center;border:1px solid var(--border);background:var(--card);}
-.ach-card.unlocked{border-color:rgba(0,229,196,0.3);background:rgba(0,229,196,0.06);}
+.ach-card.unlocked{border-color:rgba(4,104,195,0.3);background:rgba(4,104,195,0.06);}
 .ach-card.locked{opacity:.4;filter:grayscale(.6);}
 .ach-icon{font-size:26px;display:block;margin-bottom:5px;}
 .ach-name{font-size:10px;font-weight:600;line-height:1.3;}
@@ -205,10 +229,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .pdive-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
   margin:0 16px 8px;background:var(--card);border:1px solid var(--border);
   border-radius:14px;cursor:pointer;transition:border-color .2s;}
-.pdive-row:hover{border-color:rgba(0,229,196,0.4);}
+.pdive-row:hover{border-color:rgba(4,104,195,0.4);}
 
 /* ======= RESEARCHER ANALYSIS ======= */
-.analysis-card{background:var(--card);border:1px solid rgba(245,200,66,0.2);border-radius:16px;padding:16px;margin:0 16px 12px;}
+.analysis-card{background:var(--card);border:1px solid rgba(181,125,16,0.2);border-radius:16px;padding:16px;margin:0 16px 12px;}
 .analysis-title{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px;}
 .hl{color:var(--text);font-weight:600;}
 
@@ -219,18 +243,18 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .intro-slide{display:none;text-align:center;padding:0 30px;width:100%;box-sizing:border-box;}
 .intro-slide.active{display:block;animation:fadeIn .28s ease;}
 .intro-hero{font-size:76px;line-height:1;margin-bottom:22px;}
-.intro-h{font-size:24px;font-weight:700;margin-bottom:12px;color:var(--text);letter-spacing:-.4px;}
+.intro-h{font-family:var(--font-display);font-size:24px;font-weight:800;margin-bottom:12px;color:var(--navy);letter-spacing:-.4px;}
 .intro-p{font-size:14px;line-height:1.6;color:var(--muted);max-width:300px;margin:0 auto;}
 .intro-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .25s;}
 .intro-dot.active{background:var(--teal);width:20px;border-radius:4px;}
 
 /* ======= MISC ======= */
-.researcher-badge{background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.25);border-radius:14px;padding:12px 14px;margin:0 16px 12px;display:flex;gap:10px;align-items:flex-start;}
-.friends-extra{margin:8px 16px 0;background:rgba(0,229,196,0.05);border:1px solid var(--border);border-radius:14px;padding:14px;}
-.modal-overlay{display:none;position:absolute;inset:0;background:rgba(5,12,25,0.85);z-index:200;align-items:flex-end;justify-content:center;}
+.researcher-badge{background:rgba(181,125,16,0.08);border:1px solid rgba(181,125,16,0.25);border-radius:14px;padding:12px 14px;margin:0 16px 12px;display:flex;gap:10px;align-items:flex-start;}
+.friends-extra{margin:8px 16px 0;background:rgba(4,104,195,0.05);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(4,33,82,0.5);z-index:200;align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal-sheet{background:#0d2240;border-radius:24px 24px 0 0;border:1px solid var(--border);padding:24px;width:100%;max-height:80%;overflow-y:auto;}
-.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
+.modal-sheet{background:#ffffff;border-radius:24px 24px 0 0;border:1px solid var(--border);padding:24px;width:100%;max-height:80%;overflow-y:auto;}
+.modal-handle{width:40px;height:4px;background:rgba(4,33,82,0.15);border-radius:2px;margin:0 auto 20px;}
 </style>
 </head>
 <body>
@@ -244,11 +268,25 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 </div>
 
 <!-- ===== SPLASH ===== -->
-<div class="screen active" id="screen-splash" style="justify-content:center;align-items:center;background:radial-gradient(ellipse at 30% 70%,rgba(0,229,196,0.16) 0%,transparent 60%),var(--bg);">
+<div class="screen active" id="screen-splash" style="justify-content:center;align-items:center;background:radial-gradient(ellipse at 30% 70%,rgba(4,104,195,0.16) 0%,transparent 60%),var(--bg);">
   <div style="text-align:center;padding:40px 32px;">
     <div class="splash-logo">🤿</div>
     <div class="splash-title">Dive<span>Buddy</span></div>
     <p class="splash-sub">AI-powered marine species identification<br>for every dive</p>
+    <div style="text-align:left;margin:0 auto 26px;max-width:280px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:11px;align-items:center;">
+        <div style="width:34px;height:34px;border-radius:10px;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🎥</div>
+        <div style="font-size:13px;color:var(--navy);line-height:1.35;"><b>Film your dive</b> — we name every fish, coral &amp; critter you swam past.</div>
+      </div>
+      <div style="display:flex;gap:11px;align-items:center;">
+        <div style="width:34px;height:34px;border-radius:10px;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🏆</div>
+        <div style="font-size:13px;color:var(--navy);line-height:1.35;"><b>Earn points</b> and grow a personal Fish Dex of your sightings.</div>
+      </div>
+      <div style="display:flex;gap:11px;align-items:center;">
+        <div style="width:34px;height:34px;border-radius:10px;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🔬</div>
+        <div style="font-size:13px;color:var(--navy);line-height:1.35;"><b>Help science</b> — share sightings with marine researchers.</div>
+      </div>
+    </div>
     <div class="splash-btns">
       <button class="btn-p" onclick="go('signup')">Create account</button>
       <button class="btn-s" onclick="showLogin()">Log in</button>
@@ -376,7 +414,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
           <div style="font-size:13px;color:var(--muted);">Welcome back</div>
           <div style="font-size:22px;font-weight:700;margin-top:2px;" id="home-username">Diver</div>
         </div>
-        <div style="background:rgba(0,229,196,0.15);border-radius:12px;padding:8px 12px;text-align:center;cursor:pointer;" onclick="go('achievements');renderAchievements();">
+        <div style="background:rgba(4,104,195,0.15);border-radius:12px;padding:8px 12px;text-align:center;cursor:pointer;" onclick="go('achievements');renderAchievements();">
           <div style="font-size:18px;">🏆</div>
           <div style="font-size:10px;color:var(--teal);font-weight:600;margin-top:2px;" id="home-ach-count">0 awards</div>
         </div>
@@ -505,7 +543,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   <div class="scroll-area">
     <div style="padding:0 16px 12px;">
       <!-- Dive computer import banner -->
-      <div style="background:linear-gradient(135deg,rgba(0,229,196,0.12),rgba(0,229,196,0.05));border:1px solid var(--teal-border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+      <div style="background:linear-gradient(135deg,rgba(4,104,195,0.12),rgba(4,104,195,0.05));border:1px solid var(--teal-border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:24px;">🖥️</span>
           <div>
@@ -611,7 +649,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     <!-- Parsed data preview -->
     <div id="dc-preview" style="display:none;margin-bottom:16px;">
       <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Data ready to import</div>
-      <div style="background:rgba(0,229,196,0.06);border:1px solid var(--teal-border);border-radius:12px;padding:14px;">
+      <div style="background:rgba(4,104,195,0.06);border:1px solid var(--teal-border);border-radius:12px;padding:14px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
           <div><span style="color:var(--muted);">Site</span><br><strong id="dc-p-site">—</strong></div>
           <div><span style="color:var(--muted);">Duration</span><br><strong id="dc-p-dur">—</strong></div>
@@ -632,8 +670,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 <style>
 @keyframes dcScan{from{width:20%}to{width:90%}}
-.dc-brand-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;
-  padding:12px 10px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;
+.dc-brand-btn{background:rgba(4,33,82,0.04);border:1px solid var(--border);border-radius:12px;
+  padding:12px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;
   cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
 .dc-brand-btn:hover{border-color:var(--teal);background:var(--teal-dim);}
 .dc-brand-btn.selected{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);}
@@ -796,10 +834,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   </div>
   <div class="scroll-area">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 12px;">
-      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-dur">—</div><div style="font-size:11px;color:var(--muted);">Duration</div></div>
-      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-depth">—</div><div style="font-size:11px;color:var(--muted);">Max Depth</div></div>
-      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="stats-sp">—</div><div style="font-size:11px;color:var(--muted);">Species</div></div>
-      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="stats-pts">—</div><div style="font-size:11px;color:var(--muted);">Points</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="stats-dur">—</div><div style="font-size:11px;color:var(--muted);">Duration</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="stats-depth">—</div><div style="font-size:11px;color:var(--muted);">Max Depth</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="stats-sp">—</div><div style="font-size:11px;color:var(--muted);">Species</div></div>
+      <div class="card" style="margin:0;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--gold);font-family:var(--font-mono);" id="stats-pts">—</div><div style="font-size:11px;color:var(--muted);">Points</div></div>
     </div>
     <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:6px;">Notes</div><div style="font-size:13px;color:var(--muted);" id="stats-notes">—</div></div>
     <div style="padding:0 16px 16px;display:flex;gap:8px;flex-direction:column;">
@@ -828,9 +866,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     <div class="page-subtitle" id="dex-subtitle">Loading species...</div>
   </div>
   <div class="scroll-area">
-    <div style="margin:0 16px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+    <div style="margin:0 16px 12px;background:rgba(4,33,82,0.05);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
       <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input style="background:none;border:none;outline:none;color:var(--text);font-size:14px;flex:1;font-family:'Space Grotesk',sans-serif;" placeholder="Search species, location..." oninput="filterDex(this.value)" id="dex-search">
+      <input style="background:none;border:none;outline:none;color:var(--text);font-size:14px;flex:1;font-family:var(--font-body);" placeholder="Search species, location..." oninput="filterDex(this.value)" id="dex-search">
     </div>
     <div style="display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;">
       <button class="tag tag-teal" style="cursor:pointer;white-space:nowrap;border:none;" onclick="filterDex('')">All</button>
@@ -964,15 +1002,15 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <!-- Stats row -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 12px;">
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="ra-stat-dives">0</div>
+          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="ra-stat-dives">0</div>
           <div style="font-size:10px;color:var(--muted);">Dives matched</div>
         </div>
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="ra-stat-species">0</div>
+          <div style="font-size:18px;font-weight:700;color:var(--gold);font-family:var(--font-mono);" id="ra-stat-species">0</div>
           <div style="font-size:10px;color:var(--muted);">Indicator sightings</div>
         </div>
         <div class="card" style="margin:0;text-align:center;padding:10px;">
-          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="ra-stat-divers">0</div>
+          <div style="font-size:18px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="ra-stat-divers">0</div>
           <div style="font-size:10px;color:var(--muted);">Divers contributing</div>
         </div>
       </div>
@@ -1127,14 +1165,14 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   </div>
   <div class="scroll-area">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px;">
-      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="prof-dives">0</div><div style="font-size:10px;color:var(--muted);">Dives</div></div>
-      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;" id="prof-pts">0</div><div style="font-size:10px;color:var(--muted);">Points</div></div>
-      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:'Space Mono',monospace;" id="prof-sp">0</div><div style="font-size:10px;color:var(--muted);">Species</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="prof-dives">0</div><div style="font-size:10px;color:var(--muted);">Dives</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--gold);font-family:var(--font-mono);" id="prof-pts">0</div><div style="font-size:10px;color:var(--muted);">Points</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:10px;"><div style="font-size:18px;font-weight:700;color:var(--teal);font-family:var(--font-mono);" id="prof-sp">0</div><div style="font-size:10px;color:var(--muted);">Species</div></div>
     </div>
     <div class="section-label">DIVE HISTORY</div>
     <div id="profile-dives-list"></div>
     <div style="padding:0 16px 16px;margin-top:8px;">
-      <button class="btn-s" onclick="doLogout()" style="color:var(--coral);border-color:rgba(255,107,74,0.25);">Sign out</button>
+      <button class="btn-s" onclick="doLogout()" style="color:var(--coral);border-color:rgba(224,57,43,0.25);">Sign out</button>
     </div>
   </div>
   <nav class="bottom-nav">
@@ -1175,7 +1213,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <!-- Detection boxes injected here by JS -->
       <div id="photo-boxes"></div>
       <!-- Retake button -->
-      <button onclick="resetPhotoDetect()" style="position:absolute;top:10px;right:10px;background:rgba(10,22,40,0.85);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">↩ New photo</button>
+      <button onclick="resetPhotoDetect()" style="position:absolute;top:10px;right:10px;background:rgba(255,247,236,0.92);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--font-body);">↩ New photo</button>
     </div>
 
     <!-- Analyse button -->
@@ -1201,15 +1239,15 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <!-- Top match card -->
       <div class="section-label">TOP MATCH</div>
       <div id="photo-top-match" class="card" style="display:flex;gap:14px;align-items:center;">
-        <div id="photo-match-emoji" style="font-size:40px;flex-shrink:0;">🐟</div>
+        <div id="photo-match-emoji" style="width:66px;height:66px;flex-shrink:0;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:40px;line-height:1;background:linear-gradient(160deg,#eef4fc 0%,#f8fbff 100%);border:1px solid rgba(4,33,82,0.1);">🐟</div>
         <div style="flex:1;">
           <div style="font-size:18px;font-weight:700;" id="photo-match-name">—</div>
           <div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px;" id="photo-match-sci">—</div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-            <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;">
+            <div style="flex:1;height:6px;background:rgba(4,33,82,0.07);border-radius:3px;overflow:hidden;">
               <div id="photo-conf-bar" style="height:100%;background:linear-gradient(90deg,var(--teal-dim),var(--teal));border-radius:3px;width:0%;transition:width .8s;"></div>
             </div>
-            <span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--teal);" id="photo-conf-pct">0%</span>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--teal);" id="photo-conf-pct">0%</span>
           </div>
           <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;" id="photo-match-tags"></div>
         </div>
@@ -1218,7 +1256,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       <!-- All detections table -->
       <div class="section-label" style="margin-top:4px;">ALL DETECTIONS</div>
       <div id="photo-detections-table" style="margin:0 16px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">
-        <div style="display:grid;grid-template-columns:1fr 80px 60px;background:rgba(0,229,196,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
+        <div style="display:grid;grid-template-columns:1fr 80px 60px;background:rgba(4,104,195,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
           <span>Species</span><span>Confidence</span><span>Points</span>
         </div>
         <div id="photo-detections-rows"></div>
@@ -1257,12 +1295,20 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 <style>
 @keyframes photoScan{0%{top:0%;opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{top:100%;opacity:0;}}
 .det-box{position:absolute;border:2px solid var(--teal);border-radius:6px;pointer-events:none;}
-.det-box-label{position:absolute;top:-22px;left:0;background:rgba(0,229,196,0.92);color:var(--bg);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:'Space Mono',monospace;}
+.det-box-label{position:absolute;top:-22px;left:0;background:rgba(4,104,195,0.92);color:var(--bg);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:var(--font-mono);}
 .det-box.flagged{border-color:var(--coral);}
-.det-box.flagged .det-box-label{background:rgba(255,107,74,0.9);}
+.det-box.flagged .det-box-label{background:rgba(224,57,43,0.9);}
 </style>
 
 <!-- TOAST -->
+<!-- ===== SPECIES DETAIL MODAL ===== -->
+<div class="modal-overlay" id="species-modal" onclick="if(event.target===this)closeSpeciesModal()">
+  <div class="modal-sheet" id="species-sheet">
+    <div class="modal-handle"></div>
+    <div id="species-modal-body"></div>
+  </div>
+</div>
+
 <div id="toast" style="position:absolute;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal);color:var(--bg);padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:300;"></div>
 
 </div><!-- end phone -->
@@ -1477,7 +1523,7 @@ function updateHome() {
         <div style="font-size:12px;color:var(--muted);">${d.dateShort} · ${d.duration}min · ${d.depth}m</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
+        <div style="font-family:var(--font-mono);color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
         <div style="font-size:10px;color:var(--muted);">pts</div>
       </div>
     </div>`).join('');
@@ -1829,8 +1875,8 @@ function renderReport(results) {
     ${results.source === 'marine-detect'
       ? `<span class="tag tag-gold">🔬 marine-detect</span>`
       : results.source === 'demo'
-      ? `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">🎭 demo</span>`
-      : `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">Coral: ${results.coralHealth||'—'}</span>`}
+      ? `<span class="tag" style="background:rgba(4,33,82,0.1);color:var(--muted);">🎭 demo</span>`
+      : `<span class="tag" style="background:rgba(4,33,82,0.1);color:var(--muted);">Coral: ${results.coralHealth||'—'}</span>`}
   `;
 
   // Map each detected species/group to a representative crop frame from the
@@ -1845,7 +1891,7 @@ function renderReport(results) {
   const thumbFor = (species, emoji) => {
     const url = cropBySpecies[species] || cropBySpecies[baseName(species)];
     return url
-      ? `<span class="sp-emoji" style="width:38px;height:38px;padding:0;border-radius:8px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);">
+      ? `<span class="sp-emoji" style="width:38px;height:38px;padding:0;border-radius:8px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:rgba(4,33,82,0.12);">
            <img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${emoji||'🐟'}';"></span>`
       : `<span class="sp-emoji">${emoji||'🐟'}</span>`;
   };
@@ -1857,7 +1903,7 @@ function renderReport(results) {
         <div class="sp-name">${r.species}${conservationBadge(r.species,'full')}</div>
         <div class="sp-sci">${r.scientific||''}</div>
       </div>
-      <div style="font-family:'Space Mono',monospace;font-size:13px;">${r.count}</div>
+      <div style="font-family:var(--font-mono);font-size:13px;">${r.count}</div>
       <div class="sp-pts">+${(r.points||10)*r.count}</div>
     </div>`).join('') +
     results.flagged.map(f => `
@@ -1867,7 +1913,7 @@ function renderReport(results) {
         <div class="sp-sci">Requires manual review</div>
       </div>
       <div style="font-size:13px;">1</div>
-      <div style="color:var(--coral);font-family:'Space Mono',monospace;font-size:13px;">—</div>
+      <div style="color:var(--coral);font-family:var(--font-mono);font-size:13px;">—</div>
     </div>`).join('');
 
   // Flagged box
@@ -1911,16 +1957,16 @@ function renderReport(results) {
       const tsAll = t.timestamps.map(fmtTime).join(', ');
       return `
         <div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;">
-          ${cropUrl ? `<img src="${cropUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);" onerror="this.style.display='none'">` : ''}
+          ${cropUrl ? `<img src="${cropUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(4,33,82,0.08);" onerror="this.style.display='none'">` : ''}
           <div style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div style="font-size:13px;font-weight:700;color:var(--text);">${t.species}</div>
-              <div style="font-size:11px;color:var(--teal);font-family:'Space Mono',monospace;">${conf}%</div>
+              <div style="font-size:11px;color:var(--teal);font-family:var(--font-mono);">${conf}%</div>
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">ID: ${t.track_id}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Time: ${timeRange} · ${t.detection_count} frames</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Bbox: [${bboxStr}]</div>
-            <div style="font-size:10px;color:rgba(138,180,200,0.5);margin-top:3px;word-break:break-all;">Timestamps: ${tsAll}</div>
+            <div style="font-size:10px;color:rgba(4,33,82,0.5);margin-top:3px;word-break:break-all;">Timestamps: ${tsAll}</div>
           </div>
         </div>`;
     }).join('');
@@ -2155,24 +2201,23 @@ function renderDex(species) {
     const isSeen = seen.includes(sp.name);
     const cls = sp.status==='rare' ? 'rare' : isSeen ? 'seen' : 'unseen';
     const dotCls = sp.status==='rare' ? 'rare' : isSeen ? 'seen' : 'unseen';
-    // Prefer the user's OWN first-sighting frame; fall back to the reference photo.
+    // Show the diver's OWN sighting frame when they have one; otherwise the
+    // reference-style cartoon illustration (matches the brand fish artwork).
     const userImg = sightings[sp.name];
-    const displayImg = userImg || sp.img;
-    const imgHtml = displayImg
-      ? `<div style="width:100%;height:90px;border-radius:10px;overflow:hidden;margin-bottom:8px;position:relative;background:rgba(0,0,0,0.2);">
-           <img src="${displayImg}" alt="${sp.name}" loading="lazy"
-             onerror="this.style.display='none';this.nextSibling.style.display='flex';"
-             style="width:100%;height:100%;object-fit:cover;display:block;">
-           <div style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:36px;">${sp.emoji}</div>
-           ${userImg ? `<div style="position:absolute;top:5px;left:5px;background:rgba(0,229,196,0.92);color:#04121f;font-size:8px;font-weight:800;letter-spacing:.3px;padding:2px 6px;border-radius:6px;">📸 YOUR SHOT</div>` : ''}
+    const imgHtml = userImg
+      ? `<div class="dex-thumb">
+           <img src="${userImg}" alt="${sp.name}" loading="lazy"
+             onerror="this.style.display='none';this.parentNode.querySelector('.dex-fallback').style.display='flex';">
+           <div class="dex-fallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:54px;">${sp.emoji}</div>
+           <div class="dex-shot-badge">📸 Your shot</div>
          </div>`
-      : `<span style="font-size:34px;display:block;margin-bottom:8px;">${sp.emoji}</span>`;
+      : `<div class="dex-illus">${sp.emoji}</div>`;
     return `<div class="dex-card ${cls}" onclick="showSpeciesDetail('${sp.name.replace(/'/g,"\\'")}')">
       <div class="dex-dot ${dotCls}"></div>
       ${imgHtml}
-      <div style="font-size:12px;font-weight:600;line-height:1.3;">${sp.name}</div>
+      <div class="dex-name">${sp.name}</div>
       <div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:2px;">${sp.sci}</div>
-      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;"><span class="tag ${sp.status==='rare'?'tag-gold':sp.status==='uncommon'?'tag-teal':'tag'}" style="${sp.status==='common'?'background:rgba(138,180,200,0.1);color:var(--muted);font-size:10px;padding:2px 7px;':''}">${sp.pts} pts</span>${conservationBadge(sp.name,'compact')}</div>
+      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;"><span class="tag ${sp.status==='rare'?'tag-gold':sp.status==='uncommon'?'tag-teal':'tag'}" style="${sp.status==='common'?'background:rgba(4,33,82,0.1);color:var(--muted);font-size:10px;padding:2px 7px;':''}">${sp.pts} pts</span>${conservationBadge(sp.name,'compact')}</div>
     </div>`;
   }).join('');
 }
@@ -2199,11 +2244,59 @@ function showSpeciesDetail(name) {
   const sp = ALL_SPECIES.find(s=>s.name===name);
   if (!sp) return;
   const seen = currentUser ? (DB.users[currentUser.username]?.seenSpecies||[]) : [];
+  const sightings = currentUser ? (DB.users[currentUser.username]?.sightings||{}) : {};
   const isSeen = seen.includes(sp.name);
+  const userImg = sightings[sp.name];
   const code = conservationOf(sp.name);
-  const warn = code ? ` · ⚠️ ${IUCN_LABEL[code]} — protected, keep your distance` : '';
-  toast((isSeen ? '✓ ' : '') + sp.emoji + ' ' + sp.name + ' — ' + sp.pts + ' pts each' + warn, !!code);
+  const statusLabel = {common:'Common',uncommon:'Uncommon',rare:'Rare'}[sp.status] || sp.status;
+  const statusTag = sp.status==='rare'
+      ? '<span class="tag tag-gold">RARE FIND</span>'
+      : sp.status==='uncommon' ? '<span class="tag tag-teal">UNCOMMON</span>'
+      : '<span class="tag" style="background:rgba(4,33,82,0.06);color:var(--muted);">COMMON</span>';
+
+  const hero = userImg
+    ? `<div class="dex-thumb" style="height:180px;margin-bottom:14px;"><img src="${userImg}" alt="${sp.name}"><div class="dex-shot-badge">📸 Your shot</div></div>`
+    : (sp.img
+        ? `<div class="dex-thumb" style="height:180px;margin-bottom:14px;"><img src="${sp.img}" alt="${sp.name}" onerror="this.style.display='none';this.parentNode.querySelector('.dex-fallback').style.display='flex';"><div class="dex-fallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:80px;">${sp.emoji}</div></div>`
+        : `<div class="dex-illus" style="height:180px;font-size:90px;margin-bottom:14px;">${sp.emoji}</div>`);
+
+  const consBox = code
+    ? `<div class="unid-box" style="margin:0 0 12px;flex-direction:column;align-items:flex-start;gap:5px;">
+         <div style="font-weight:700;color:var(--coral);font-size:13px;">⚠️ ${IUCN_LABEL[code]}</div>
+         <div style="font-size:12px;color:var(--muted);line-height:1.5;">Protected on the IUCN Red List. Observe from a distance, never touch or chase it, and log the sighting to help researchers track the population.</div>
+       </div>`
+    : '';
+
+  const seenBox = isSeen
+    ? `<div class="card" style="margin:0 0 12px;display:flex;align-items:center;gap:10px;border-color:var(--teal-border);background:var(--teal-dim);">
+         <span style="font-size:20px;">✓</span>
+         <div><div style="font-size:13px;font-weight:700;color:var(--teal);">In your Fish Dex</div>
+         <div style="font-size:11px;color:var(--muted);">You've logged this species on a dive.</div></div></div>`
+    : `<div class="card" style="margin:0 0 12px;display:flex;align-items:center;gap:10px;">
+         <span style="font-size:20px;">🔍</span>
+         <div><div style="font-size:13px;font-weight:700;">Not spotted yet</div>
+         <div style="font-size:11px;color:var(--muted);">Film one on your next dive to add it and earn ${sp.pts} pts.</div></div></div>`;
+
+  document.getElementById('species-modal-body').innerHTML = `
+    ${hero}
+    <div style="font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--navy);line-height:1.1;">${sp.name}</div>
+    <div style="font-size:13px;color:var(--muted);font-style:italic;margin:3px 0 10px;">${sp.sci}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${statusTag}<span class="tag tag-teal" style="background:var(--teal-dim);">+${sp.pts} pts</span>${conservationBadge(sp.name,'full')}</div>
+    ${consBox}
+    ${seenBox}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div class="card" style="margin:0;text-align:center;padding:12px;">
+        <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--teal);">${sp.pts}</div>
+        <div style="font-size:10px;color:var(--muted);">Points / sighting</div></div>
+      <div class="card" style="margin:0;text-align:center;padding:12px;">
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--navy);margin-top:3px;">${statusLabel}</div>
+        <div style="font-size:10px;color:var(--muted);">Rarity</div></div>
+    </div>
+    ${sp.credit && !userImg ? `<div style="font-size:9px;color:var(--muted);text-align:center;margin-bottom:12px;">Reference photo: ${sp.credit}</div>` : ''}
+    <button class="btn-p" onclick="closeSpeciesModal()">Done</button>`;
+  document.getElementById('species-modal').classList.add('open');
 }
+function closeSpeciesModal(){ document.getElementById('species-modal').classList.remove('open'); }
 
 // ============================================================
 // LEADERBOARD
@@ -2224,7 +2317,7 @@ function renderLeaderboard() {
     ...users.filter(u=>!mockUsers.find(m=>m.username===u.username)).map(u=>({...u,flag:'🌊',emoji:'🤿'}))
   ].sort((a,b)=>(b.points||0)-(a.points||0));
 
-  function rankColor(i){ return i===0?'color:#f5c842':i===1?'color:#b0bec5':i===2?'color:#cd7f32':''; }
+  function rankColor(i){ return i===0?'color:#b57d10':i===1?'color:#7a8896':i===2?'color:#b5651d':''; }
 
   function makeRows(list, container) {
     document.getElementById(container).innerHTML = list.map((u,i) => {
@@ -2366,7 +2459,7 @@ function renderProfile() {
         <div style="font-size:12px;color:var(--muted);">${d.dateShort} · ${d.duration}min · ${d.depth}m</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:14px;">+${d.pointsEarned}</div>
+        <div style="font-family:var(--font-mono);color:var(--teal);font-size:14px;">+${d.pointsEarned}</div>
         <div style="font-size:10px;color:var(--muted);">${(d.species||[]).length} species</div>
       </div>
       <div style="color:var(--muted);font-size:16px;margin-left:8px;">›</div>
@@ -2396,7 +2489,7 @@ function renderMyDives() {
         ${d.results ? '<span class="tag tag-teal" style="margin-top:5px;">📋 Report saved</span>' : ''}
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Space Mono',monospace;color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
+        <div style="font-family:var(--font-mono);color:var(--teal);font-size:15px;font-weight:700;">+${d.pointsEarned}</div>
         <div style="font-size:10px;color:var(--muted);">pts</div>
       </div>
     </div>`).join('');
@@ -2601,7 +2694,7 @@ function renderPhotoResults(data) {
 
   document.getElementById('photo-match-tags').innerHTML = [
     `<span class="tag ${meta.rarity === 'rare' ? 'tag-gold' : 'tag-teal'}">${meta.rarity.toUpperCase()}</span>`,
-    `<span class="tag" style="background:rgba(138,180,200,0.1);color:var(--muted);">+${meta.pts} pts</span>`,
+    `<span class="tag" style="background:rgba(4,33,82,0.1);color:var(--muted);">+${meta.pts} pts</span>`,
     conservationBadge(top.species, 'compact'),
     top.flagged ? `<span class="tag tag-coral">⚑ Low confidence</span>` : `<span class="tag tag-teal">✓ Confirmed</span>`,
   ].join('');
@@ -2610,7 +2703,7 @@ function renderPhotoResults(data) {
   document.getElementById('photo-detections-rows').innerHTML = sorted.map(d => {
     const m = PHOTO_SPECIES_META[d.species] || {emoji:'🐟', pts:10};
     const p = Math.round(d.confidence * 100);
-    return `<div style="display:grid;grid-template-columns:1fr 80px 60px;padding:11px 14px;border-top:1px solid var(--border);background:var(--card);font-size:13px;align-items:center;${d.flagged?'background:rgba(255,107,74,0.04);':''}">
+    return `<div style="display:grid;grid-template-columns:1fr 80px 60px;padding:11px 14px;border-top:1px solid var(--border);background:var(--card);font-size:13px;align-items:center;${d.flagged?'background:rgba(224,57,43,0.04);':''}">
       <div>
         <span style="margin-right:6px;">${m.emoji}</span>
         <span style="font-weight:600;">${d.species}</span>
@@ -2618,8 +2711,8 @@ function renderPhotoResults(data) {
         ${conservationBadge(d.species,'full')}
         ${d.notes ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">${d.notes}</div>` : ''}
       </div>
-      <div style="font-family:'Space Mono',monospace;font-size:12px;color:${d.flagged ? 'var(--coral)':'var(--teal)'};">${p}%</div>
-      <div style="font-family:'Space Mono',monospace;font-size:12px;color:var(--teal);">+${m.pts}</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:${d.flagged ? 'var(--coral)':'var(--teal)'};">${p}%</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--teal);">+${m.pts}</div>
     </div>`;
   }).join('');
 
@@ -2862,7 +2955,7 @@ function openSurveyBuilder() {
     <div class="sb-species-btn" id="sb-sp-${sp.replace(/[^a-z]/gi,'_')}"
       onclick="toggleSurveySpecies(this,'${sp}')"
       style="padding:8px 10px;border-radius:10px;border:1px solid var(--border);
-        background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;
+        background:rgba(4,33,82,0.03);cursor:pointer;font-size:12px;
         transition:all .2s;color:var(--muted);">
       ${sp}
     </div>`).join('');
@@ -2881,7 +2974,7 @@ function closeSurveyBuilder() {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   document.querySelectorAll('.sb-species-btn').forEach(b => {
-    b.style.background = 'rgba(255,255,255,0.03)';
+    b.style.background = 'rgba(4,33,82,0.03)';
     b.style.color = 'var(--muted)';
     b.style.borderColor = 'var(--border)';
     b.dataset.selected = '';
@@ -2891,7 +2984,7 @@ function closeSurveyBuilder() {
 function toggleSurveySpecies(btn, sp) {
   const sel = btn.dataset.selected === 'true';
   btn.dataset.selected = sel ? '' : 'true';
-  btn.style.background    = sel ? 'rgba(255,255,255,0.03)' : 'var(--teal-dim)';
+  btn.style.background    = sel ? 'rgba(4,33,82,0.03)' : 'var(--teal-dim)';
   btn.style.color         = sel ? 'var(--muted)'           : 'var(--teal)';
   btn.style.borderColor   = sel ? 'var(--border)'           : 'var(--teal-border)';
 }
@@ -2978,7 +3071,7 @@ function renderSurveyList() {
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn-s" style="flex:1;padding:9px;font-size:12px;" onclick="setRaTab('reports');document.getElementById('ra-report-survey-select').value='${s.id}';renderResearchReports();">View Report →</button>
-        <button class="btn-s" style="padding:9px 14px;font-size:12px;color:var(--coral);border-color:rgba(255,107,74,0.25);" onclick="deleteSurvey('${s.id}')">Delete</button>
+        <button class="btn-s" style="padding:9px 14px;font-size:12px;color:var(--coral);border-color:rgba(224,57,43,0.25);" onclick="deleteSurvey('${s.id}')">Delete</button>
       </div>
     </div>`).join('');
 }
@@ -3048,13 +3141,13 @@ function renderResearchReports() {
   } else {
     container.innerHTML = `
       <div style="border-radius:14px;overflow:hidden;border:1px solid var(--border);">
-        <div style="display:grid;grid-template-columns:1fr 60px 80px;background:rgba(0,229,196,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
+        <div style="display:grid;grid-template-columns:1fr 60px 80px;background:rgba(4,104,195,0.08);padding:10px 14px;font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;">
           <span>Species</span><span>Sightings</span><span>% of dives</span>
         </div>
         ${Object.entries(speciesCounts).sort((a,b)=>b[1]-a[1]).map(([sp,count])=>`
           <div style="display:grid;grid-template-columns:1fr 60px 80px;padding:11px 14px;border-top:1px solid var(--border);background:var(--card);font-size:13px;align-items:center;">
             <div style="font-weight:600;">${sp}</div>
-            <div style="font-family:'Space Mono',monospace;font-weight:700;color:var(--teal);">${count}</div>
+            <div style="font-family:var(--font-mono);font-weight:700;color:var(--teal);">${count}</div>
             <div style="font-size:12px;color:var(--muted);">${matchedDives.length ? Math.round(count/matchedDives.length*100)+'%' : '—'}</div>
           </div>`).join('')}
       </div>`;

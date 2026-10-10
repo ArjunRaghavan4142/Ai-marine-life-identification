@@ -8,12 +8,14 @@ produces a species summary plus CSV/PDF reports.
 ## Pipeline
 
 ```
-video ─▶ frame extraction ─▶ detection + tracking ─▶ aggregation ─▶ identification ─▶ report
-        (OpenCV, 5 fps)      (YOLO ensemble +        (dedup, unique   (iNaturalist    (CSV/PDF)
-                              BoT-SORT tracker)       counting)        Vision)
+video ─▶ frame extraction  ─▶ detection + tracking ─▶ aggregation ─▶ identification ─▶ report
+        (OpenCV 5 fps +       (YOLO ensemble +        (dedup, unique   (BioCLIP local,  (CSV/PDF)
+         underwater enhance)   BoT-SORT tracker)       counting)        region-aware)
 ```
 
-1. **Frame extraction** — OpenCV samples frames from the upload.
+1. **Frame extraction** — OpenCV samples frames, then an underwater colour/
+   contrast restoration pass (`enhance.py`) corrects the blue cast before
+   detection, lifting both detection and ID confidence on murky footage.
 2. **Detection + tracking** — a YOLO model ensemble finds animals; BoT-SORT
    keeps one track ID per individual across frames (so one fish isn't counted
    once per frame).
@@ -37,7 +39,7 @@ overlapping guess.
 Broad/generalist models (ReefFamilies, MultiClass, MarineLife) were disabled —
 they were redundant with the species models and mostly produced mislabels.
 
-## Species identification — current approach & decision
+## Species identification — current approach
 
 **Detection answers *where* an animal is; a vision model answers *what* it is.**
 The YOLO detectors' own class labels are unreliable at species level (they call
@@ -45,50 +47,42 @@ reef fish "grouper/shark/etc."), so naming is done by a separate vision model on
 the crops, collapsed to a coarse **group** (Parrotfish, Angelfish, Sea Turtle,
 Moorish Idol, …) with score-weighted multi-crop voting.
 
-**Current engine: iNaturalist Vision** (`backend/app/pipeline/inat_id.py`).
-- Trained on the world's largest citizen-science organism dataset — real
-  underwater photos in messy conditions, so it generalizes well to blurry dive
-  crops where local models (CLIP) and the detectors' own labels failed.
-- Results scoped to reef-relevant taxa (fish/reptiles/inverts) to drop
-  spurious mammal/bird guesses.
-- **Auto-refreshing auth** (`inat_auth.py`): with OAuth credentials configured
-  it mints and refreshes its own API token, so it never expires. Falls back to
-  a static `INAT_TOKEN` otherwise. See "Setup" below.
+Naming runs as a graceful **engine chain** (`main.identify_with_fallback`) so no
+single dead dependency can ever blank a report:
 
-Alternative engines are kept in-tree and can be swapped in `main.py`:
-- **Gemini Vision** (`vision_id.py`) — very accurate, but the free tier is
-  capped at ~20 requests/day/model.
-- **Offline / YOLO-label** (`identify.regroup_yolo`) — fully offline and
-  instant, but mislabels reef fish (models' limitation).
-- **Local CLIP** (`clip_id.py`) — offline; too weak on these crops (kept for
-  reference).
+1. **BioCLIP — local, primary** (`bioclip_id.py`). A tree-of-life CLIP model that
+   runs on-device, so naming needs no API token, quota, or network. It zero-shot
+   matches each crop against a curated reef label set, **restricted to the dive
+   region** so it can't pick a species that doesn't live there. Model weights
+   (~1GB) auto-download from HuggingFace on first run, then run offline.
+2. **iNaturalist Vision — fallback** (`inat_id.py`, auto-refresh in
+   `inat_auth.py`). A strong second opinion when a token is configured.
+3. **Offline YOLO grouping — last resort** (`identify.regroup_yolo`). Rebuilds the
+   summary from the detectors' own labels so the report is never all-"Unknown".
 
-### Why iNaturalist now, and when to switch to FishNet
+**Precision gate** (`identify.py`): a detection is only *asserted* as a species
+when the ID is high/medium confidence; a confident detection with an uncertain
+name is routed to the review queue instead of being reported (and possibly wrong).
 
-**Decision (for private long-term display & testing, app *not* published): use
-iNaturalist auto-refresh.** It is already accurate on real footage, needs no
-training, and is low-maintenance. iNaturalist's rate-limit / ToS concerns apply
-to a *published* app with many users hammering their API — not to private,
-low-volume demo and testing use.
+### Fine-tuning on your own footage (highest accuracy lever)
+`scripts/build_bioclip_prototypes.py` builds a prototype classifier from labelled
+crops — one folder per species under `backend/datasets/reef_labeled/`. It needs
+only a few hundred crops, no GPU training, and the API auto-loads the result on
+restart. This anchors naming to your own water, lighting, and camera. A full
+fine-tune on the **FishNet** dataset plus our own labelled crops is the later
+step if DiveBuddy is ever published (note: FishNet is fish-only, so MegaFauna
+must be kept for sea turtles).
 
-**Planned upgrade path — FishNet, later, only if we publish:** if DiveBuddy is
-ever published (or needs to run fully offline / independent of iNaturalist), the
-right move is to **fine-tune our own model on the FishNet dataset *plus* labeled
-crops from our own dive footage**, kept alongside turtle/megafauna detection.
-Notes for when we do this:
-- FishNet is **fish-only** — it has no sea turtles, so MegaFauna (or turtle
-  training data) must be retained for the turtle.
-- FishNet is curated reference photos; our footage is blurry dive video, so
-  domain adaptation on our own labeled crops is needed for it to transfer.
-
-This is deliberately deferred — not needed for current display/testing.
+Alternative engines kept in-tree and swappable in `main.py`: **Gemini Vision**
+(`vision_id.py`, ~20 requests/day free tier) and an older **local CLIP**
+(`clip_id.py`).
 
 ## Setup
 
 ```bash
 # backend
 cd backend
-pip install -r requirements.txt        # fastapi, uvicorn, ultralytics, torch, opencv, reportlab, requests
+pip install -r requirements.txt        # fastapi, uvicorn, ultralytics, torch, opencv, reportlab, requests, open_clip_torch
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # frontend (separate shell)

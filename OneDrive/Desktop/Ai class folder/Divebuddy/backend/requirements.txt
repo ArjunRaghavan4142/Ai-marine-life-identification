@@ -9,6 +9,7 @@ ultralytics
 opencv-python
 pandas
 reportlab
-requests            # iNaturalist / Gemini HTTP calls
+requests            # iNaturalist HTTP calls (fallback identifier)
+open_clip_torch     # BioCLIP: primary local species identifier (bioclip_id.py).
+                    # Model weights (~1GB) auto-download from HuggingFace on first run.
 google-genai        # optional: Gemini Vision engine (vision_id.py)
-# open_clip_torch   # optional: local CLIP engine (clip_id.py) -- heavy, install only if used

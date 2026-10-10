@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import traceback
 import uuid
+from functools import partial
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,8 +16,9 @@ from pydantic import BaseModel
 from app.pipeline.aggregate import aggregate_tracks, common_name
 from app.pipeline.detect import run_detection, run_photo_detection
 from app.pipeline.frames import extract_frames
-from app.pipeline.identify import group_of, reidentify
+from app.pipeline.identify import group_of, regroup_yolo, reidentify
 from app.pipeline.inat_id import identify_inat
+from app.pipeline import bioclip_id, inat_auth
 from app.pipeline.report import generate_csv, generate_pdf
 
 # Species naming engine: iNaturalist's computer-vision model (organism-specific,
@@ -104,6 +106,50 @@ def list_regions():
     return {"regions": [{"id": k, "description": v} for k, v in REGIONS.items()]}
 
 
+def identify_with_fallback(result: dict, detections: list[dict], region: str = "") -> dict:
+    """Name species with a graceful engine chain: BioCLIP -> iNaturalist -> offline.
+
+    1. BioCLIP (local, primary): a tree-of-life CLIP model that runs on-device, so
+       naming never depends on an API token, quota, or the network. Its candidate
+       species are restricted to those that occur in `region`.
+    2. iNaturalist (fallback): used when BioCLIP is unavailable or names nothing.
+    3. Offline YOLO grouping (last resort): rebuilds the summary from the
+       detectors' own labels so the report is never an empty wall of "Unknown".
+
+    Each engine mutates track labels in place, so before trying the next one we
+    re-aggregate from the raw detections to hand it clean detector labels.
+    """
+    # 1) BioCLIP -- local, primary. Region-restrict its candidate species.
+    if bioclip_id.available():
+        try:
+            ided = reidentify(result, OUTPUT_DIR, "", RARITY_MAP,
+                              identify=partial(bioclip_id.identify_bioclip, region=region),
+                              method="bioclip")
+            if ided.get("species_summary"):
+                return ided
+            print("  BioCLIP named nothing — trying iNaturalist")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  BioCLIP unavailable ({str(exc)[:80]}) — trying iNaturalist")
+        result = aggregate_tracks(detections, RARITY_MAP)
+
+    # 2) iNaturalist -- fallback second opinion (needs a live token).
+    if inat_auth.get_token(fallback=INAT_TOKEN):
+        try:
+            ided = reidentify(result, OUTPUT_DIR, INAT_TOKEN, RARITY_MAP,
+                              identify=identify_inat, method="inaturalist")
+            if ided.get("species_summary"):
+                return ided
+            print("  iNaturalist named nothing (token likely expired) — using offline YOLO naming")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  iNaturalist unavailable ({str(exc)[:80]}) — using offline YOLO naming")
+        result = aggregate_tracks(detections, RARITY_MAP)
+    else:
+        print("  No iNaturalist token configured — using offline YOLO naming")
+
+    # 3) Offline YOLO grouping -- always produces a usable report.
+    return regroup_yolo(aggregate_tracks(detections, RARITY_MAP), RARITY_MAP)
+
+
 def process_video(job_id: str, video_path: pathlib.Path) -> None:
     job_dir = OUTPUT_DIR / job_id
     try:
@@ -125,11 +171,16 @@ def process_video(job_id: str, video_path: pathlib.Path) -> None:
 
         result = aggregate_tracks(detections, RARITY_MAP)
 
-        # iNaturalist Vision: group-level identification from best crops with
-        # score-weighted multi-crop voting. Falls back to Unknown on any error.
-        result = reidentify(result, OUTPUT_DIR, INAT_TOKEN, RARITY_MAP,
-                            identify=identify_inat, method="inaturalist")
-        print(f"  Identification complete — {len(result['species_summary'])} groups")
+        # Species naming: prefer iNaturalist Vision (organism-trained, specific),
+        # but fall back to offline YOLO group naming whenever iNat is unavailable
+        # -- a missing/expired token, a network error, or it authenticates yet
+        # names nothing. Without this fallback an expired token turns every
+        # detection into "Unknown" and the report shows 0 species even though the
+        # detectors found a Parrotfish, a Lionfish, a turtle, etc.
+        region = JOBS[job_id].get("region", "")
+        result = identify_with_fallback(result, detections, region)
+        print(f"  Identification complete — {len(result['species_summary'])} groups "
+              f"via {result.get('identification_method')} (region={region or 'any'})")
 
         (job_dir / "detections.json").write_text(json.dumps(detections, indent=2))
         generate_csv(result, job_dir / "report.csv")

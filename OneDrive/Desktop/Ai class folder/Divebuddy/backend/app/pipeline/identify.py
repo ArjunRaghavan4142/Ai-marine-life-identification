@@ -43,6 +43,14 @@ SOLITARY_MEGAFAUNA = {"Sea Turtle", "Shark", "Ray", "Manta Ray"}
 
 _CONF_WEIGHT = {"high": 3.0, "medium": 1.5, "low": 0.5}
 
+# Precision gate: a track is only ASSERTED as a species in the summary when the
+# identifier's winning vote reached at least this confidence. A confident
+# *detection* whose *name* is low-confidence is a real animal we couldn't name
+# reliably -- it goes to the review queue with its best guess instead of being
+# reported (and possibly counted wrong). Tightening this trades recall for
+# precision: fewer species asserted, but the ones asserted are trustworthier.
+ASSERT_CONF = {"high", "medium"}
+
 
 def _crops_for(item, output_dir, k):
     tc = item.get("top_crops") or []
@@ -146,8 +154,17 @@ def reidentify(result, output_dir, api_key, rarity_map, identify=identify_specie
 
         if kind == "track":
             item["species"] = common  # keep the specific name on the detail row
-            if group not in EXCLUDE_GROUPS:
+            # Precision gate: assert only when the ID vote was confident. A
+            # confident detection with a low-confidence name is real but
+            # uncertain -- route it to review with its guess instead of reporting
+            # a possibly-wrong species.
+            if group in EXCLUDE_GROUPS:
+                pass  # couldn't name it at all -> not asserted, not reviewed
+            elif conf_level in ASSERT_CONF:
                 add(group, item.get("best_confidence", 0.9))
+            else:
+                item["species_guess"] = common
+                new_review.append(item)
         else:  # review
             item["species_guess"] = common
             frames = item.get("frame_span", item.get("detection_count", 1))
